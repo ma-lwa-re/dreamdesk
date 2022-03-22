@@ -34,12 +34,26 @@
 #error No desk type defined!
 #endif
 
+#define LED_STATUS              (GPIO_NUM_36)
+#define LED_ACTIVITY            (GPIO_NUM_37)
+#define LED_OFF                 (0x00)
+#define LED_ON                  (0x01)
 #define UART_NUM_2_TXD          (GPIO_NUM_4)
 #define UART_NUM_2_RXD          (GPIO_NUM_5)
-#define UART_NUM_2_RTS          (UART_PIN_NO_CHANGE)
-#define UART_NUM_2_CTS          (UART_PIN_NO_CHANGE)
 #define UART_BAUD_RATE          (19200)
 #define UART_STACK_SIZE         (4096)
+#define CONSOLE_NUM_TXD         (GPIO_NUM_43)
+#define CONSOLE_NUM_RXD         (GPIO_NUM_44)
+#define CONSOLE_BAUD_RATE       (115200)
+#define ARROW_KEY_UP            (0x41)
+#define ARROW_KEY_DOWN          (0x42)
+#define MEMORY_1                (0x31)
+#define MEMORY_2                (0x32)
+#define MEMORY_3                (0x33)
+#define MEMORY_4                (0x34)
+#define MEMORY_5                (0x35)
+#define MEMORY_6                (0x36)
+#define MEMORY_7                (0x37)
 
 extern uint8_t current_desk_height;
 extern uint8_t target_desk_height;

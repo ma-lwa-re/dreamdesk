@@ -25,6 +25,7 @@
 #include "wifi.h"
 #include "esp_log.h"
 #include "string.h"
+#include "driver/gpio.h"
 
 #define IP 1
 #include "HAP.h"
@@ -298,4 +299,13 @@ void app_main() {
     xTaskCreate(key_task, "key_task", UART_STACK_SIZE, NULL, 10, NULL);
     xTaskCreate(move_task, "move_task", UART_STACK_SIZE, NULL, configMAX_PRIORITIES-1, NULL);
     xTaskCreate(rx_task, "rx_task", UART_STACK_SIZE, NULL, configMAX_PRIORITIES, NULL);
+
+    gpio_config_t gpio_config_leds = {
+        .mode = GPIO_MODE_OUTPUT,
+        .pin_bit_mask = ((1ULL << LED_STATUS) | (1ULL << LED_ACTIVITY))
+    };
+
+    gpio_config(&gpio_config_leds);
+    gpio_set_level(LED_ACTIVITY, LED_OFF);
+    gpio_set_level(LED_STATUS, LED_ON);
 }

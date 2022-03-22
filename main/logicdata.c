@@ -48,21 +48,29 @@ void desk_wake_up() {
 }
 
 void desk_move_up() {
-    if (desk_sleep && response_frame.action == DESK_IDLE) {
-        desk_wake_up();
+
+    if (response_frame.action == DESK_IDLE) {
+        ESP_LOGI(LOGICDATA_TAG, "Moving desk up!");
+
+        if (desk_sleep) {
+            desk_wake_up();
+        }
     }
     response_frame.direction = DESK_UP;
     response_frame.action = DESK_MOVE;
-    ESP_LOGI(LOGICDATA_TAG, "Moving desk up!");
 }
 
 void desk_move_down() {
-    if (desk_sleep && response_frame.action == DESK_IDLE) {
-        desk_wake_up();
+
+    if (response_frame.action == DESK_IDLE) {
+        ESP_LOGI(LOGICDATA_TAG, "Moving desk down!");
+
+        if (desk_sleep) {
+            desk_wake_up();
+        }
     }
     response_frame.direction = DESK_DOWN;
     response_frame.action = DESK_MOVE;
-    ESP_LOGI(LOGICDATA_TAG, "Moving desk down!");
 }
 
 void desk_stop() {
@@ -229,7 +237,6 @@ void desk_handle_lin_frame(lin_frame_t *lin_frame, uint8_t *event_data, uint8_t 
             }
         } else {
             ESP_LOGE(LOGICDATA_TAG, "Unknown error code (0x%02x)!", lin_frame->data[2]);
-            ESP_LOG_BUFFER_HEX_LEVEL(LOGICDATA_TAG, event_data, event_size, ESP_LOG_VERBOSE);
         }
     }
     desk_sleep = true;

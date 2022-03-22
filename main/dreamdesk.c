@@ -94,7 +94,7 @@ void rx_task(void *arg) {
 
     QueueHandle_t uart_queue = NULL;
 
-    ESP_ERROR_CHECK(uart_set_pin(UART_NUM_2, UART_NUM_2_TXD, UART_NUM_2_RXD, UART_NUM_2_RTS, UART_NUM_2_CTS));
+    ESP_ERROR_CHECK(uart_set_pin(UART_NUM_2, UART_NUM_2_TXD, UART_NUM_2_RXD, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
     ESP_ERROR_CHECK(uart_driver_install(UART_NUM_2, UART_FIFO_LEN * 2, 0, 10, &uart_queue, 0));
     ESP_ERROR_CHECK(uart_param_config(UART_NUM_2, &uart_config));
     ESP_ERROR_CHECK(uart_set_rx_timeout(UART_NUM_2, 1));
@@ -107,11 +107,10 @@ void rx_task(void *arg) {
     uart_event_t lin_event;
     uint8_t *event_data = (uint8_t *)malloc(128);
 
-    ESP_LOGE(LIN_TAG, "HELLO rx_task");
-
     while (xQueueReceive(uart_queue, (void *)&lin_event, portMAX_DELAY)) {
 
         if (lin_event.type == UART_DATA) {
+            gpio_set_level(LED_ACTIVITY, LED_ON);
             memset(event_data, 0x00, 128);
 
             int16_t protected_id = -1;
@@ -151,7 +150,8 @@ void rx_task(void *arg) {
                 }
             }*/
 
-            desk_handle_lin_frame(lin_frame, event_data, event_size);    
+            desk_handle_lin_frame(lin_frame, event_data, event_size);
+            gpio_set_level(LED_ACTIVITY, LED_OFF);
         }
     }
 }
@@ -162,8 +162,6 @@ void move_task(void *arg) {
         if (desk_control) {
 
             if (target_desk_height != current_desk_height) {
-
-                ESP_LOGW(DREAMDESK_TAG, "current %d target %d!", current_desk_height, target_desk_height);
 
                 if (target_desk_height < current_desk_height) {
                     desk_move_down();
@@ -186,7 +184,7 @@ void move_task(void *arg) {
 
 void key_task(void *arg) {
     uart_config_t uart_config = {
-        .baud_rate = 115200,
+        .baud_rate = CONSOLE_BAUD_RATE,
         .data_bits = UART_DATA_8_BITS,
         .parity = UART_PARITY_DISABLE,
         .stop_bits = UART_STOP_BITS_1,
@@ -194,7 +192,7 @@ void key_task(void *arg) {
         .source_clk = UART_SCLK_APB
     };
 
-    ESP_ERROR_CHECK(uart_set_pin(UART_NUM_0, 43, 44, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
+    ESP_ERROR_CHECK(uart_set_pin(UART_NUM_0, CONSOLE_NUM_TXD, CONSOLE_NUM_RXD, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
     ESP_ERROR_CHECK(uart_driver_install(UART_NUM_0, UART_FIFO_LEN * 2, 0, 10, NULL, 0));
     ESP_ERROR_CHECK(uart_param_config(UART_NUM_0, &uart_config));
     ESP_ERROR_CHECK(uart_set_rx_timeout(UART_NUM_0, 1));
@@ -208,39 +206,39 @@ void key_task(void *arg) {
         if (move_data > 0) {
             uart_read_bytes(UART_NUM_0, event_data, 3, 1);
         
-            if (event_data[2] == 0x41) {
+            if (event_data[2] == ARROW_KEY_UP) {
                 desk_set_target_height(target_desk_height + 1);
             }
 
-            if (event_data[2] == 0x42) {
+            if (event_data[2] == ARROW_KEY_DOWN) {
                 desk_set_target_height(target_desk_height - 1);
             }
 
-            if (event_data[0] == 0x31) {
+            if (event_data[0] == MEMORY_1) {
                 desk_set_target_height(60);
             }
 
-            if (event_data[0] == 0x32) {
+            if (event_data[0] == MEMORY_2) {
                 desk_set_target_height(70);
             }
 
-            if (event_data[0] == 0x33) {
+            if (event_data[0] == MEMORY_3) {
                 desk_set_target_height(80);
             }
 
-            if (event_data[0] == 0x34) {
+            if (event_data[0] == MEMORY_4) {
                 desk_set_target_height(90);
             }
 
-            if (event_data[0] == 0x35) {
+            if (event_data[0] == MEMORY_5) {
                 desk_set_target_height(100);
             }
 
-            if (event_data[0] == 0x36) {
+            if (event_data[0] == MEMORY_6) {
                 desk_set_target_height(110);
             }
 
-            if (event_data[0] == 0x37) {
+            if (event_data[0] == MEMORY_7) {
                 desk_set_target_height(120);
             }
         }

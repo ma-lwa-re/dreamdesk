@@ -30,6 +30,27 @@ git checkout -b mbedtls-2.16.6-adk origin/mbedtls-2.16.6-adk
 cd $IDF_PATH/../
 git clone --recursive https://github.com/espressif/esp-apple-homekit-adk.git
 ```
+
+### HomeKit Setup Code
+```
+cd $IDF_PATH/../esp-apple-homekit-adk/homekit_adk
+make tools
+cd Tools
+./provision_raspi.sh --category 14 --setup-code 133-71-337 --setup-id DDSK Dreamdesk
+cd Dreamdesk
+cp ../../../tools/accessory_setup/accessory_setup.csv .
+python $IDF_PATH/components/nvs_flash/nvs_partition_generator/nvs_partition_gen.py generate accessory_setup.csv accessory_setup.bin 0x6000
+esptool.py -p $ESPPORT write_flash 0x340000 accessory_setup.bin
+```
+
+### Resetting HomeKit Pairing
+
+The accessory pairing information is stored in the NVS (Non Volatile Storage) partition. Once paired, the accessory cannot be paired again, without clearing this pairing information first. It can be done as below:
+
+```
+esptool.py -p $ESPPORT erase_region 0x10000 0x6000
+```
+
 ### Dreamdesk
 ```
 cd $IDF_PATH/../
