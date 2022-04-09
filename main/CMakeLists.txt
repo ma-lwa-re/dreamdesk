@@ -1,27 +1,23 @@
-#idf_component_register(SRCS ./wifi.c ./main.c ./dreamdesk.c ./homekit.c ./ikea.c ./lin.c INCLUDE_DIRS ".")
-idf_component_register(SRCS ./wifi.c ./main.c ./dreamdesk.c ./homekit.c ./logicdata.c ./lin.c INCLUDE_DIRS ".")
+# Choose your desk type (LOGICDATA | IKEA)
+set(DESK_TYPE "LOGICDATA")
 
-set(LOGICDATA 1)
-#set(IKEA 1)
+# Choose your home automation type (HOMEKIT | NEST | ALEXA | NONE)
+set(HOME_AUTOMATION "HOMEKIT")
 
-#if(LOGICDATA)
-#add_definitions(-DLOGICDATA=1)
-#idf_component_register(SRCS ./wifi.c ./main.c ./dreamdesk.c ./homekit.c ./logicmotion.c ./lin.c INCLUDE_DIRS ".")
-#endif()
+if(DESK_TYPE STREQUAL "LOGICDATA")
+    set(INCLUDE_DESK ./logicdata.c)
+elseif(DESK_TYPE STREQUAL "IKEA")
+    set(INCLUDE_DESK ./ikea.c)
+endif()
 
-#if(IKEA)
-#    add_definitions(-DIKEA=1)
-#    idf_component_register(SRCS ./wifi.c ./main.c ./dreamdesk.c ./homekit.c ./ikea.c ./lin.c INCLUDE_DIRS ".")
-#endif()
+if(HOME_AUTOMATION STREQUAL "HOMEKIT")
+    set(INCLUDE_HOME ./wifi.c ./homekit.c)
+elseif(HOME_AUTOMATION STREQUAL "NEST")
+    set(INCLUDE_HOME ./wifi.c ./nest.c)
+elseif(HOME_AUTOMATION STREQUAL "ALEXA")
+    set(INCLUDE_HOME ./wifi.c ./alexa.c)
+endif()
 
-add_definitions(-DHAP_LOG_LEVEL=${CONFIG_HAP_LOG_LEVEL})
+idf_component_register(SRCS ./main.c ./dreamdesk.c ./lin.c ./sensors.c ${INCLUDE_DESK} ${INCLUDE_HOME} INCLUDE_DIRS ".")
 
-# Choose your side
-#add_compile_definitions(APPLE_HOMEKIT)
-#add_compile_definitions(GOOGLE_HOME)
-#add_compile_definitions(AMAZON_ALEXA)
-
-# Choose your side
-#add_compile_definitions(LOGICDATA=1)
-#add_compile_definitions(IKEA)
-#add_definitions(-DLOGICDATA=1)
+add_definitions(-D${DESK_TYPE} -D${HOME_AUTOMATION})

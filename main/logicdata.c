@@ -74,6 +74,7 @@ void desk_move_down() {
 }
 
 void desk_stop() {
+
     if (response_frame.action != DESK_MOVE) {
         return;
     }
@@ -95,7 +96,6 @@ void desk_handle_lin_frame(lin_frame_t *lin_frame, uint8_t *event_data, uint8_t 
         }
     } else if (protected_id == LIN_PROTECTED_ID_MOVE) {
 
-        //if ((desk_ready || desk_reset) && response_frame.action != DESK_IDLE) {
         if (response_frame.action != DESK_IDLE) {
             response_frame.random = rand() % 0xFF;                        
             response_frame.checksum = checksum((uint8_t *) &response_frame, lin_frame->protected_id);
@@ -112,8 +112,6 @@ void desk_handle_lin_frame(lin_frame_t *lin_frame, uint8_t *event_data, uint8_t 
         status_frame = (status_frame_t*)lin_frame;
 
         if (status_frame->ready == DESK_READY) {
-            //desk_ready = true;
-            //desk_reset = false;
             uint8_t new_desk_height = ((lin_frame->data[3] << 8) + lin_frame->data[4]) / 10;
 
             if (new_desk_height != current_desk_height) {
@@ -133,7 +131,6 @@ void desk_handle_lin_frame(lin_frame_t *lin_frame, uint8_t *event_data, uint8_t 
                 ESP_LOGI(LOGICDATA_TAG, "Desk height %dcm @ %d%%", current_desk_height, desk_percentage);
             }
         } else if (status_frame->ready == DESK_NOT_READY) {
-            //desk_ready = false;
 
             if (status_frame->status == DESK_PAIRING) {
 
@@ -143,14 +140,12 @@ void desk_handle_lin_frame(lin_frame_t *lin_frame, uint8_t *event_data, uint8_t 
                         break;
                     case 0x01:
                         ESP_LOGE(LOGICDATA_TAG, "Desk error, need to be reset!");
-                        //desk_reset = true;
                         break;
                     default:
                         ESP_LOGE(LOGICDATA_TAG, "Unknown status (0x%02x)!", lin_frame->data[5]);
                         break;
                 }
             } else if (status_frame->status == DESK_ERROR) {
-                //desk_ready = false;
 
                 switch (status_frame->error_code) {
                     case 0x01:
@@ -230,15 +225,13 @@ void desk_handle_lin_frame(lin_frame_t *lin_frame, uint8_t *event_data, uint8_t 
                             "Keys and wait for 5 seconds. Then, try again.");
                         break;                                        
                     default:
-                        ESP_LOGE(LOGICDATA_TAG, "Unknown error code! (0x%02x)", 
-                            lin_frame->data[6]);
+                        ESP_LOGE(LOGICDATA_TAG, "Unknown error code! (0x%02x)", status_frame->error_code);
                         break;
                 }
             }
         } else {
-            ESP_LOGE(LOGICDATA_TAG, "Unknown error code (0x%02x)!", lin_frame->data[2]);
+            ESP_LOGE(LOGICDATA_TAG, "Unknown state (0x%02x)!", status_frame->ready);
         }
     }
     desk_sleep = true;
-    ESP_LOG_BUFFER_HEX_LEVEL(LOGICDATA_TAG, event_data, event_size, ESP_LOG_VERBOSE);
 }

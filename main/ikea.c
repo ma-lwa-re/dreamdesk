@@ -115,5 +115,4 @@ void desk_handle_lin_frame(lin_frame_t *lin_frame, uint8_t *event_data, uint8_t 
             ESP_LOGI(IKEA_TAG, "Desk height %dcm @ %d%%", current_desk_height, desk_percentage);
         }
     }
-    ESP_LOG_BUFFER_HEX_LEVEL(IKEA_TAG, event_data, event_size, ESP_LOG_WARN); // DEBUG
 }

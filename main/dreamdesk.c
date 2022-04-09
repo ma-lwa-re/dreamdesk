@@ -40,8 +40,6 @@ uint8_t current_desk_height = 0xFF;
 uint8_t target_desk_height = 0xFF;
 uint8_t desk_percentage = 0xFF;
 
-//uint8_t desk_ready = true;
-//uint8_t desk_reset = false;
 uint8_t desk_control = false;
 
 void chip_info() {
@@ -82,7 +80,6 @@ void desk_set_target_height(uint8_t target_height) {
 }
 
 void rx_task(void *arg) {
-    
     uart_config_t uart_config = {
         .baud_rate = UART_BAUD_RATE,
         .data_bits = UART_DATA_8_BITS,
@@ -110,7 +107,7 @@ void rx_task(void *arg) {
     while (xQueueReceive(uart_queue, (void *)&lin_event, portMAX_DELAY)) {
 
         if (lin_event.type == UART_DATA) {
-            gpio_set_level(LED_ACTIVITY, LED_ON);
+            gpio_set_level(LED_ACTIVITY, ON);
             memset(event_data, 0x00, 128);
 
             int16_t protected_id = -1;
@@ -118,6 +115,7 @@ void rx_task(void *arg) {
             uint8_t event_size = lin_event.size;
             
             uart_read_bytes(UART_NUM_2, event_data, event_size, 1);
+            ESP_LOG_BUFFER_HEX_LEVEL(LIN_TAG, event_data, event_size, ESP_LOG_VERBOSE);
             
             for (uint8_t i = 0; i <= LIN_HEADER_SIZE; i++) {
 
@@ -151,8 +149,8 @@ void rx_task(void *arg) {
             }*/
 
             desk_handle_lin_frame(lin_frame, event_data, event_size);
-            gpio_set_level(LED_ACTIVITY, LED_OFF);
         }
+        gpio_set_level(LED_ACTIVITY, OFF);
     }
 }
 
@@ -182,7 +180,7 @@ void move_task(void *arg) {
     }
 }
 
-void key_task(void *arg) {
+void usb_task(void *arg) {
     uart_config_t uart_config = {
         .baud_rate = CONSOLE_BAUD_RATE,
         .data_bits = UART_DATA_8_BITS,
@@ -192,7 +190,7 @@ void key_task(void *arg) {
         .source_clk = UART_SCLK_APB
     };
 
-    ESP_ERROR_CHECK(uart_set_pin(UART_NUM_0, CONSOLE_NUM_TXD, CONSOLE_NUM_RXD, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
+    ESP_ERROR_CHECK(uart_set_pin(UART_NUM_0, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
     ESP_ERROR_CHECK(uart_driver_install(UART_NUM_0, UART_FIFO_LEN * 2, 0, 10, NULL, 0));
     ESP_ERROR_CHECK(uart_param_config(UART_NUM_0, &uart_config));
     ESP_ERROR_CHECK(uart_set_rx_timeout(UART_NUM_0, 1));

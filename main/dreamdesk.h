@@ -23,27 +23,22 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-#define LOGICDATA 1
-//#define IKEA 1
-
-#ifdef LOGICDATA
-#include "logicdata.h"
-#elif IKEA
-#include "ikea.h"
+#if defined(LOGICDATA)
+    #include "logicdata.h"
+#elif defined(IKEA)
+    #include "ikea.h"
 #else
-#error No desk type defined!
+    #error No desk type defined!
 #endif
 
-#define LED_STATUS              (GPIO_NUM_36)
-#define LED_ACTIVITY            (GPIO_NUM_37)
-#define LED_OFF                 (0x00)
-#define LED_ON                  (0x01)
-#define UART_NUM_2_TXD          (GPIO_NUM_4)
-#define UART_NUM_2_RXD          (GPIO_NUM_5)
+#define LED_STATUS              (GPIO_NUM_40)
+#define LED_ACTIVITY            (GPIO_NUM_41)
+#define OFF                     (0x00)
+#define ON                      (0x01)
+#define UART_NUM_2_TXD          (GPIO_NUM_16)
+#define UART_NUM_2_RXD          (GPIO_NUM_17)
 #define UART_BAUD_RATE          (19200)
 #define UART_STACK_SIZE         (4096)
-#define CONSOLE_NUM_TXD         (GPIO_NUM_43)
-#define CONSOLE_NUM_RXD         (GPIO_NUM_44)
 #define CONSOLE_BAUD_RATE       (115200)
 #define ARROW_KEY_UP            (0x41)
 #define ARROW_KEY_DOWN          (0x42)
@@ -77,6 +72,6 @@ void desk_set_target_height(uint8_t target_height);
 
 void rx_task(void *arg);
 
-void key_task(void *arg);
+void usb_task(void *arg);
 
 void move_task(void *arg);

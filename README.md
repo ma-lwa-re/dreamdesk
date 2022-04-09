@@ -93,8 +93,8 @@ dreamdesk
 
 ## TODO
 - [ ] IKEA desk testing
-- [ ] PCB prototype
-- [ ] PCB assembly
+- [x] PCB prototype
+- [x] PCB assembly
 - [ ] HomeKit memory integration
 - [ ] HomeKit sensors (humidity + air + temperature)
 - [ ] Google Home support

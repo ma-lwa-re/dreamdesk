@@ -32,6 +32,8 @@
  */
 #define kAttributeCount ((size_t) 21)
 
+void home_task(void *arg);
+
 /**
  * HomeKit Accessory Information service.
  */
