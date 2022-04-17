@@ -59,6 +59,12 @@ typedef struct status_frame {
     uint8_t checksum;
 } status_frame_t;
 
+typedef struct status_frame_height {
+    uint8_t reserved0[3];
+    uint16_t millimeters;
+    uint8_t reserved1[5];
+} status_frame_height_t;
+
 typedef struct response_frame {
     uint8_t random;
     uint8_t reserved0[1];

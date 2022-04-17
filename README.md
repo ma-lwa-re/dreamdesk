@@ -4,7 +4,21 @@ The aim of this project was to create a framework that makes compatible any elec
 It has been tested and currently works with any desk relying on the Dynamic Motion system by Logicdata, like Yaasa Desks, Gravit iDesk, etc. The IKEA Bekant desks will be supported soon. The code was developped in C for the ESP32 microcontrollers family.
 
 ## Config
-Rename wifi.h.default to wifi.h and set your Wifi SSID and password.
+### Select features
+Edit the `CMakeLists.txt` file in the `main` directory to select what kind of desk you want to control and other optional features.
+```
+# REQUIRED: Choose your desk type (LOGICDATA | IKEA)
+set(DESK_TYPE "LOGICDATA")
+
+# OPTIONAL: Choose your home automation type (HOMEKIT | NEST | ALEXA | NONE)
+set(HOME_AUTOMATION "HOMEKIT")
+
+# OPTIONAL: Use the sensors (ON | OFF)
+set(SENSORS ON)
+```
+
+### Wifi
+Rename `wifi.h.default` to `wifi.h` and set your Wifi SSID and password. You can leave those default values if you're not using any home automation ecosystem.
 ```
 mv main/wifi.h.default main/wifi.h
 
@@ -84,6 +98,8 @@ dreamdesk
 │   ├── logicdata.c
 │   ├── logicdata.h
 │   ├── main.c
+│   ├── sensors.c
+│   ├── sensors.h
 │   ├── wifi.c
 │   └── wifi.h.default
 ├── partitions.csv
@@ -96,7 +112,8 @@ dreamdesk
 - [x] PCB prototype
 - [x] PCB assembly
 - [ ] HomeKit memory integration
-- [ ] HomeKit sensors (humidity + air + temperature)
+- [ ] HomeKit sensors integration
+- [x] Sensors (humidity + air + temperature)
 - [ ] Google Home support
 - [ ] Amazon Alexa support
 - [ ] Dump Logicdata firwmare

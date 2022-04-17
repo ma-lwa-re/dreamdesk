@@ -24,6 +24,7 @@
 #include "freertos/task.h"
 #include "driver/uart.h"
 #include "esp_log.h"
+#include "math.h"
 #include "logicdata.h"
 
 static const char *LOGICDATA_TAG = "logicdata";
@@ -92,7 +93,7 @@ void desk_handle_lin_frame(lin_frame_t *lin_frame, uint8_t *event_data, uint8_t 
 
         if (event_size > LIN_HEADER_SIZE) {
             ESP_LOGI(LOGICDATA_TAG, "Pairing sequence %d%%", (uint8_t)((lin_frame->data[0] / 7.0) * 100));
-            ESP_LOG_BUFFER_HEX_LEVEL(LOGICDATA_TAG, event_data, event_size, ESP_LOG_VERBOSE);
+            ESP_LOG_BUFFER_HEX_LEVEL(LOGICDATA_TAG, event_data, event_size, ESP_LOG_DEBUG);
         }
     } else if (protected_id == LIN_PROTECTED_ID_MOVE) {
 
@@ -112,7 +113,7 @@ void desk_handle_lin_frame(lin_frame_t *lin_frame, uint8_t *event_data, uint8_t 
         status_frame = (status_frame_t*)lin_frame;
 
         if (status_frame->ready == DESK_READY) {
-            uint8_t new_desk_height = ((lin_frame->data[3] << 8) + lin_frame->data[4]) / 10;
+            uint8_t new_desk_height = round(((lin_frame->data[3] << 8) + lin_frame->data[4]) / 10.0);
 
             if (new_desk_height != current_desk_height) {
 

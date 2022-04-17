@@ -22,8 +22,8 @@
 */
 #include <stdio.h>
 
-#define I2C_MASTER_SDA                      (GPIO_NUM_19)
-#define I2C_MASTER_SCL                      (GPIO_NUM_20)
+#define I2C_MASTER_SDA                      (GPIO_NUM_6)
+#define I2C_MASTER_SCL                      (GPIO_NUM_7)
 #define I2C_MASTER_RX_BUF_DISABLE           (0)
 #define I2C_MASTER_TX_BUF_DISABLE           (0)
 #define I2C_MASTER_FREQ_HZ                  (100000)
@@ -37,14 +37,24 @@
 #define SCD41_START_PERIODIC_MEASUREMENT    (0x21B1)
 #define SCD41_READ_MEASUREMENT              (0xEC05)
 #define SCD41_STOP_PERIODIC_MEASUREMENT     (0x3F86)
+#define MEASUREMENT_COUNT                   (0x05)
+#define SLEEP_PERIOD_MS                     (1000 * 60 * 15)
+#define CO2_LEVEL_ERROR                     (100)
+#define CO2_LEVEL_GOOD                      (800)
+#define CO2_LEVEL_MEDIOCRE                  (1500)
+
+typedef struct msb_lsb {
+    uint8_t high;
+    uint8_t low;
+} msb_lsb_t;
 
 typedef struct measurements {
-    uint16_t co2;
-    uint8_t  co2_crc;
-    uint16_t temperature;
-    uint8_t  temperature_crc;
-    uint16_t humidity;
-    uint8_t  humidity_crc;
+    msb_lsb_t co2;
+    uint8_t co2_crc;
+    msb_lsb_t temperature;
+    uint8_t temperature_crc;
+    msb_lsb_t humidity;
+    uint8_t humidity_crc;
 } measurements_t;
 
 void sensors_task(void *arg);

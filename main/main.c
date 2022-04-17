@@ -22,9 +22,11 @@
 */
 #include "dreamdesk.h"
 #if defined(HOMEKIT)
-    #include "homekit.h"
+#include "homekit.h"
 #endif
+#if defined(SENSORS_ON)
 #include "sensors.h"
+#endif
 #include "esp_log.h"
 #include "string.h"
 #include "freertos/FreeRTOS.h"
@@ -40,7 +42,9 @@ void app_main() {
     chip_info();
     memory_init();
 
-    xTaskCreate(sensors_task, "sensors_task", UART_STACK_SIZE, NULL, configMAX_PRIORITIES-9, NULL);
+    #if defined(SENSORS_ON)
+        xTaskCreate(sensors_task, "sensors_task", UART_STACK_SIZE, NULL, configMAX_PRIORITIES-9, NULL);
+    #endif
 
     #if defined(HOMEKIT) || defined(NEST) || defined(ALEXA)
         xTaskCreate(home_task, "home_task", HOMEKIT_STACK_SIZE, NULL, configMAX_PRIORITIES-7, NULL);

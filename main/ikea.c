@@ -22,6 +22,7 @@
 */
 #include "esp_log.h"
 #include "ikea.h"
+#include "math.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
@@ -96,7 +97,7 @@ void desk_handle_lin_frame(lin_frame_t *lin_frame, uint8_t *event_data, uint8_t 
         status_frame = (status_frame_t*)lin_frame;
 
         uint16_t new_desk_height = (status_frame->height0 + (status_frame->height1 << 8));
-        new_desk_height = (12741.0 + (2.0 * (float)new_desk_height)) / 201.0;
+        new_desk_height = round((12741.0 + (2.0 * (float)new_desk_height)) / 201.0);
 
         if (new_desk_height != current_desk_height) {
 

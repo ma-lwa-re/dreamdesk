@@ -1,8 +1,11 @@
-# Choose your desk type (LOGICDATA | IKEA)
+# REQUIRED: Choose your desk type (LOGICDATA | IKEA)
 set(DESK_TYPE "LOGICDATA")
 
-# Choose your home automation type (HOMEKIT | NEST | ALEXA | NONE)
+# OPTIONAL: Choose your home automation type (HOMEKIT | NEST | ALEXA | NONE)
 set(HOME_AUTOMATION "HOMEKIT")
+
+# OPTIONAL: Use the sensors (ON | OFF)
+set(SENSORS ON)
 
 if(DESK_TYPE STREQUAL "LOGICDATA")
     set(INCLUDE_DESK ./logicdata.c)
@@ -18,6 +21,10 @@ elseif(HOME_AUTOMATION STREQUAL "ALEXA")
     set(INCLUDE_HOME ./wifi.c ./alexa.c)
 endif()
 
-idf_component_register(SRCS ./main.c ./dreamdesk.c ./lin.c ./sensors.c ${INCLUDE_DESK} ${INCLUDE_HOME} INCLUDE_DIRS ".")
+if(SENSORS)
+    set(INCLUDE_SENSORS ./sensors.c)
+endif()
 
-add_definitions(-D${DESK_TYPE} -D${HOME_AUTOMATION})
+idf_component_register(SRCS ./main.c ./dreamdesk.c ./lin.c ${INCLUDE_DESK} ${INCLUDE_HOME} ${INCLUDE_SENSORS} INCLUDE_DIRS ".")
+
+add_definitions(-D${DESK_TYPE} -D${HOME_AUTOMATION} -DSENSORS_${SENSORS})

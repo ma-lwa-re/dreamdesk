@@ -101,6 +101,8 @@ void rx_task(void *arg) {
     //ESP_ERROR_CHECK(uart_set_line_inverse(UART_NUM_2, UART_NUM_2_TXD));
     //#endif
 
+    esp_log_level_set(LIN_TAG, ESP_LOG_INFO);
+
     uart_event_t lin_event;
     uint8_t *event_data = (uint8_t *)malloc(128);
 
@@ -115,7 +117,7 @@ void rx_task(void *arg) {
             uint8_t event_size = lin_event.size;
             
             uart_read_bytes(UART_NUM_2, event_data, event_size, 1);
-            ESP_LOG_BUFFER_HEX_LEVEL(LIN_TAG, event_data, event_size, ESP_LOG_VERBOSE);
+            ESP_LOG_BUFFER_HEX_LEVEL(LIN_TAG, event_data, event_size, ESP_LOG_DEBUG);
             
             for (uint8_t i = 0; i <= LIN_HEADER_SIZE; i++) {
 
@@ -241,7 +243,7 @@ void usb_task(void *arg) {
             }
         }
         memset(event_data, 0x00, 8);
-        ESP_LOG_BUFFER_HEX_LEVEL(LIN_TAG, event_data, 3, ESP_LOG_VERBOSE);
+        ESP_LOG_BUFFER_HEX_LEVEL(LIN_TAG, event_data, 3, ESP_LOG_DEBUG);
         vTaskDelay(10);
     }
 }
