@@ -26,6 +26,8 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
+#define LOG_LOCAL_LEVEL ESP_LOG_VERBOSE
+
 static const char *IKEA_TAG = "ikea";
 
 response_frame_t response_frame = {
@@ -45,13 +47,19 @@ response_frame_t keep_alive_frame = {
 status_frame_t *status_frame = NULL;
 
 void desk_move_up() {
+
+    if(response_frame.action == DESK_IDLE) {
+        ESP_LOGI(IKEA_TAG, "Moving desk up!");
+    }
     response_frame.action = DESK_UP;
-    ESP_LOGI(IKEA_TAG, "Moving desk up!");
 }
 
 void desk_move_down() {
+
+    if(response_frame.action == DESK_IDLE) {
+        ESP_LOGI(IKEA_TAG, "Moving desk down!");
+    }
     response_frame.action = DESK_DOWN;
-    ESP_LOGI(IKEA_TAG, "Moving desk down!");
 }
 
 void desk_stop() {
@@ -63,8 +71,10 @@ void desk_stop() {
 
 void desk_handle_lin_frame(lin_frame_t *lin_frame, uint8_t *event_data, uint8_t event_size) {
     uint8_t protected_id = lin_frame->protected_id & 0x3F;
+    esp_log_level_set(IKEA_TAG, ESP_LOG_DEBUG);
+    ESP_LOG_BUFFER_HEX_LEVEL(IKEA_TAG, event_data, event_size, ESP_LOG_DEBUG);
     
-    if (protected_id == LIN_PROTECTED_ID_SYNC) {
+    if(protected_id == LIN_PROTECTED_ID_SYNC) {
         // TODO INIT
         /*
         I (15234) lin: Desk height 203cm @ 162%
@@ -74,11 +84,11 @@ void desk_handle_lin_frame(lin_frame_t *lin_frame, uint8_t *event_data, uint8_t 
         I (15434) lin: Desk height 102cm @ 81%
         W (15434) lin: 00 55 92 66 0f fc fa 
         */
-    } else if (protected_id == LIN_PROTECTED_ID_KEEP_ALIVE) {
+    } else if(protected_id == LIN_PROTECTED_ID_KEEP_ALIVE) {
             //keep_alive_frame.checksum = checksum((uint8_t *) &keep_alive_frame, lin_frame->protected_id);
             //uart_write_bytes(UART_NUM_2, &keep_alive_frame, sizeof(keep_alive_frame));
-            ESP_LOG_BUFFER_HEX_LEVEL(IKEA_TAG, &keep_alive_frame, sizeof(keep_alive_frame), ESP_LOG_ERROR); // DEBUG
-    } else if (protected_id == LIN_PROTECTED_ID_MOVE) {
+            //ESP_LOG_BUFFER_HEX_LEVEL(IKEA_TAG, &keep_alive_frame, sizeof(keep_alive_frame), ESP_LOG_DEBUG);
+    } else if(protected_id == LIN_PROTECTED_ID_MOVE) {
 
         // check ready
         /*if (lin_frame->data[1] == 0xFF || lin_frame->data[2] == 0xBF) {
@@ -86,22 +96,22 @@ void desk_handle_lin_frame(lin_frame_t *lin_frame, uint8_t *event_data, uint8_t 
             return;
         }*/
 
-        if (response_frame.action != DESK_IDLE && status_frame != NULL) {
+        if(response_frame.action != DESK_IDLE && status_frame != NULL) {
             response_frame.height0 = status_frame->height0;
             response_frame.height1 = status_frame->height1;
-            response_frame.checksum = checksum((uint8_t *) &response_frame, lin_frame->protected_id);
+            response_frame.checksum = checksum((uint8_t*) &response_frame, lin_frame->protected_id);
             //uart_write_bytes(UART_NUM_2, &response_frame, sizeof(response_frame));
-            ESP_LOG_BUFFER_HEX_LEVEL(IKEA_TAG, &response_frame, sizeof(response_frame), ESP_LOG_ERROR); // DEBUG
+            //ESP_LOG_BUFFER_HEX_LEVEL(IKEA_TAG, &response_frame, sizeof(response_frame), ESP_LOG_DEBUG);
         }
-    } else if (protected_id == LIN_PROTECTED_ID_STATUS) {
+    } else if(protected_id == LIN_PROTECTED_ID_STATUS) {
         status_frame = (status_frame_t*)lin_frame;
 
-        uint16_t new_desk_height = (status_frame->height0 + (status_frame->height1 << 8));
+        uint16_t new_desk_height = status_frame->height0 + (status_frame->height1 << 8);
         new_desk_height = round((12741.0 + (2.0 * (float)new_desk_height)) / 201.0);
 
-        if (new_desk_height != current_desk_height) {
+        if(new_desk_height != current_desk_height) {
 
-            if (current_desk_height == 0xFF) {
+            if(current_desk_height == 0xFF) {
                 target_desk_height = new_desk_height;
             }
 

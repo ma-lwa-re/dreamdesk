@@ -5,16 +5,19 @@ It has been tested and currently works with any desk relying on the Dynamic Moti
 
 ## Config
 ### Select features
-Edit the `CMakeLists.txt` file in the `main` directory to select what kind of desk you want to control and other optional features.
+Edit the `CMakeLists.txt` file to select what kind of desk you want to control and other optional features.
 ```
 # REQUIRED: Choose your desk type (LOGICDATA | IKEA)
 set(DESK_TYPE "LOGICDATA")
 
-# OPTIONAL: Choose your home automation type (HOMEKIT | NEST | ALEXA | NONE)
+# OPTIONAL: Choose your home automation ecosystem (HOMEKIT | NEST | ALEXA | NONE)
 set(HOME_AUTOMATION "HOMEKIT")
 
 # OPTIONAL: Use the sensors (ON | OFF)
 set(SENSORS ON)
+
+# OPTIONAL: Set the temperature scale (C | F | K)
+set(SENSORS_SCALE "C")
 ```
 
 ### Wifi
@@ -77,7 +80,7 @@ idf.py build flash
 
 ## Console output
 ```
-sudo cu -l /dev/cu.usbserial-130 -s 115200
+sudo cu -l $ESPPORT -s 115200
 ```
 
 ## Project

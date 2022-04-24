@@ -43,11 +43,11 @@ void app_main() {
     memory_init();
 
     #if defined(SENSORS_ON)
-        xTaskCreate(sensors_task, "sensors_task", UART_STACK_SIZE, NULL, configMAX_PRIORITIES-9, NULL);
+    xTaskCreate(sensors_task, "sensors_task", UART_STACK_SIZE, NULL, configMAX_PRIORITIES-9, NULL);
     #endif
 
     #if defined(HOMEKIT) || defined(NEST) || defined(ALEXA)
-        xTaskCreate(home_task, "home_task", HOMEKIT_STACK_SIZE, NULL, configMAX_PRIORITIES-7, NULL);
+    xTaskCreate(home_task, "home_task", HOMEKIT_STACK_SIZE, NULL, configMAX_PRIORITIES-7, NULL);
     #endif
 
     xTaskCreate(usb_task, "usb_task", UART_STACK_SIZE, NULL, configMAX_PRIORITIES-5, NULL);

@@ -21,7 +21,10 @@
 * SOFTWARE.
 */
 #include <stdio.h>
+#include <stdlib.h>
 
+#define FAHRENHEIT(celcius)                 (((celcius * 9) / 5.0) + 32)
+#define KELVIN(celcius)                     (celcius + 273.15)
 #define I2C_MASTER_SDA                      (GPIO_NUM_6)
 #define I2C_MASTER_SCL                      (GPIO_NUM_7)
 #define I2C_MASTER_RX_BUF_DISABLE           (0)
@@ -34,14 +37,17 @@
 #define I2C_ACK_VAL                         (0x00)
 #define I2C_NACK_VAL                        (0x01)
 #define SCD41_SENSOR_ADDR                   (0x62)
-#define SCD41_START_PERIODIC_MEASUREMENT    (0x21B1)
-#define SCD41_READ_MEASUREMENT              (0xEC05)
-#define SCD41_STOP_PERIODIC_MEASUREMENT     (0x3F86)
 #define MEASUREMENT_COUNT                   (0x05)
-#define SLEEP_PERIOD_MS                     (1000 * 60 * 15)
+#define SLEEP_INTERVAL                      (1000 * 60 * 15)
+#define UPDATE_INTERVAL                     (6000)
 #define CO2_LEVEL_ERROR                     (100)
 #define CO2_LEVEL_GOOD                      (800)
 #define CO2_LEVEL_MEDIOCRE                  (1500)
+#define SCALE_CELCIUS                       ('C')
+#define SCALE_FAHRENHEIT                    ('F')
+#define SCALE_KELVIN                        ('K')
+
+char scale;
 
 typedef struct msb_lsb {
     uint8_t high;

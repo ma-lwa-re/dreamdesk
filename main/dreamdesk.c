@@ -56,7 +56,7 @@ void chip_info() {
 
 void memory_init() {
     esp_err_t flash_error = nvs_flash_init();
-    if (flash_error == ESP_ERR_NVS_NO_FREE_PAGES || flash_error == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+    if(flash_error == ESP_ERR_NVS_NO_FREE_PAGES || flash_error == ESP_ERR_NVS_NEW_VERSION_FOUND) {
         ESP_ERROR_CHECK(nvs_flash_erase());
         flash_error = nvs_flash_init();
     }
@@ -69,7 +69,7 @@ void desk_set_target_percentage(uint8_t target_percentage) {
 
 void desk_set_target_height(uint8_t target_height) {
 
-    if (target_height < DESK_MIN_HEIGHT || target_height > DESK_MAX_HEIGHT) {
+    if(target_height < DESK_MIN_HEIGHT || target_height > DESK_MAX_HEIGHT) {
         ESP_LOGE(DREAMDESK_TAG, "Target height %dcm is out of range!", target_height);
         return;
     }
@@ -104,28 +104,27 @@ void rx_task(void *arg) {
     esp_log_level_set(LIN_TAG, ESP_LOG_INFO);
 
     uart_event_t lin_event;
-    uint8_t *event_data = (uint8_t *)malloc(128);
+    uint8_t *event_data = (uint8_t*) malloc(128);
 
-    while (xQueueReceive(uart_queue, (void *)&lin_event, portMAX_DELAY)) {
+    while(xQueueReceive(uart_queue, (void*) &lin_event, portMAX_DELAY)) {
 
-        if (lin_event.type == UART_DATA) {
+        if(lin_event.type == UART_DATA) {
             gpio_set_level(LED_ACTIVITY, ON);
             memset(event_data, 0x00, 128);
 
             int16_t protected_id = -1;
             lin_frame_t *lin_frame = NULL;
-            uint8_t event_size = lin_event.size;
             
-            uart_read_bytes(UART_NUM_2, event_data, event_size, 1);
-            ESP_LOG_BUFFER_HEX_LEVEL(LIN_TAG, event_data, event_size, ESP_LOG_DEBUG);
+            uart_read_bytes(UART_NUM_2, event_data, lin_event.size, 1);
+            ESP_LOG_BUFFER_HEX_LEVEL(LIN_TAG, event_data, lin_event.size, ESP_LOG_DEBUG);
             
-            for (uint8_t i = 0; i <= LIN_HEADER_SIZE; i++) {
+            for(uint8_t i = 0; i <= LIN_HEADER_SIZE; i++) {
 
-                if (event_data[i] == LIN_HEADER_SYNC){
-                    lin_frame = (lin_frame_t *) &event_data[i + 1];
+                if(event_data[i] == LIN_HEADER_SYNC){
+                    lin_frame = (lin_frame_t*) &event_data[i + 1];
                     break;
-                } else if ((event_data[i] == LIN_HEADER_BREAK && event_data[i + 1] == LIN_HEADER_SYNC)) {
-                    lin_frame = (lin_frame_t *) &event_data[i + 2];
+                } else if((event_data[i] == LIN_HEADER_BREAK && event_data[i + 1] == LIN_HEADER_SYNC)) {
+                    lin_frame = (lin_frame_t*) &event_data[i + 2];
                     break;
                 }
             }
@@ -136,9 +135,9 @@ void rx_task(void *arg) {
 
             protected_id = lin_frame->protected_id & 0x3F;
 
-            if (protected_id < LIN_PROTECTED_ID_MIN || protected_id > LIN_PROTECTED_ID_MAX) {
+            if(protected_id < LIN_PROTECTED_ID_MIN || protected_id > LIN_PROTECTED_ID_MAX) {
                 ESP_LOGE(LIN_TAG, "Invalid protected_id %d", protected_id);
-                ESP_LOG_BUFFER_HEX_LEVEL(LIN_TAG, event_data, event_size, ESP_LOG_ERROR);
+                ESP_LOG_BUFFER_HEX_LEVEL(LIN_TAG, event_data, lin_event.size, ESP_LOG_ERROR);
             }
 
             // Check checksum ?? nope break the communication, only use for specific tasks
@@ -150,7 +149,7 @@ void rx_task(void *arg) {
                 }
             }*/
 
-            desk_handle_lin_frame(lin_frame, event_data, event_size);
+            desk_handle_lin_frame(lin_frame, event_data, lin_event.size);
         }
         gpio_set_level(LED_ACTIVITY, OFF);
     }
@@ -159,20 +158,20 @@ void rx_task(void *arg) {
 void move_task(void *arg) {
     for(;;) {
 
-        if (desk_control) {
+        if(desk_control) {
 
-            if (target_desk_height != current_desk_height) {
+            if(target_desk_height != current_desk_height) {
 
-                if (target_desk_height < current_desk_height) {
+                if(target_desk_height < current_desk_height) {
                     desk_move_down();
                 }
 
-                if (target_desk_height > current_desk_height) {
+                if(target_desk_height > current_desk_height) {
                     desk_move_up();
                 }
             }
 
-            if (target_desk_height == current_desk_height) {
+            if(target_desk_height == current_desk_height) {
                 desk_stop();
                 desk_control = false;
                 target_desk_height = current_desk_height;
@@ -197,53 +196,57 @@ void usb_task(void *arg) {
     ESP_ERROR_CHECK(uart_param_config(UART_NUM_0, &uart_config));
     ESP_ERROR_CHECK(uart_set_rx_timeout(UART_NUM_0, 1));
 
-    uint8_t *event_data = (uint8_t *)malloc(8);
     uint8_t move_data = 0;
 
     for(;;) {
-        ESP_ERROR_CHECK(uart_get_buffered_data_len(UART_NUM_0, (size_t*)&move_data));
+        ESP_ERROR_CHECK(uart_get_buffered_data_len(UART_NUM_0, (size_t*) &move_data));
 
-        if (move_data > 0) {
-            uart_read_bytes(UART_NUM_0, event_data, 3, 1);
+        if(move_data > 0) {
+            keyboard_t keyboard = {
+                .memory = 0x00,
+                .reserved0 = {0x00},
+                .arrow_key = 0x00
+            };
+
+            uart_read_bytes(UART_NUM_0, &keyboard, sizeof(keyboard), 0x01);
         
-            if (event_data[2] == ARROW_KEY_UP) {
-                desk_set_target_height(target_desk_height + 1);
+            if(keyboard.arrow_key == ARROW_KEY_UP) {
+                desk_set_target_height(target_desk_height + 0x01);
             }
 
-            if (event_data[2] == ARROW_KEY_DOWN) {
-                desk_set_target_height(target_desk_height - 1);
+            if(keyboard.arrow_key == ARROW_KEY_DOWN) {
+                desk_set_target_height(target_desk_height - 0x01);
             }
 
-            if (event_data[0] == MEMORY_1) {
-                desk_set_target_height(60);
+            if(keyboard.memory == MEMORY_1) {
+                desk_set_target_height(MEMORY_1_HEIGHT);
             }
 
-            if (event_data[0] == MEMORY_2) {
-                desk_set_target_height(70);
+            if(keyboard.memory == MEMORY_2) {
+                desk_set_target_height(MEMORY_2_HEIGHT);
             }
 
-            if (event_data[0] == MEMORY_3) {
-                desk_set_target_height(80);
+            if(keyboard.memory == MEMORY_3) {
+                desk_set_target_height(MEMORY_3_HEIGHT);
             }
 
-            if (event_data[0] == MEMORY_4) {
-                desk_set_target_height(90);
+            if(keyboard.memory == MEMORY_4) {
+                desk_set_target_height(MEMORY_4_HEIGHT);
             }
 
-            if (event_data[0] == MEMORY_5) {
-                desk_set_target_height(100);
+            if(keyboard.memory == MEMORY_5) {
+                desk_set_target_height(MEMORY_5_HEIGHT);
             }
 
-            if (event_data[0] == MEMORY_6) {
-                desk_set_target_height(110);
+            if(keyboard.memory == MEMORY_6) {
+                desk_set_target_height(MEMORY_6_HEIGHT);
             }
 
-            if (event_data[0] == MEMORY_7) {
-                desk_set_target_height(120);
+            if(keyboard.memory == MEMORY_7) {
+                desk_set_target_height(MEMORY_7_HEIGHT);
             }
+            ESP_LOG_BUFFER_HEX_LEVEL(LIN_TAG, &keyboard, sizeof(keyboard), ESP_LOG_DEBUG);
         }
-        memset(event_data, 0x00, 8);
-        ESP_LOG_BUFFER_HEX_LEVEL(LIN_TAG, event_data, 3, ESP_LOG_DEBUG);
         vTaskDelay(10);
     }
 }

@@ -25,9 +25,9 @@
 
 uint8_t checksum(uint8_t *lin_frame, uint8_t protected_id) {
     uint16_t checksum = protected_id;
-    for (uint8_t i = 0; i < 8; i++) {
+    for(uint8_t i = 0; i < 8; i++) {
         checksum += lin_frame[i];
-        if (checksum > 0xFF) {
+        if(checksum > 0xFF) {
             checksum -= 0xFF;
         }
     }

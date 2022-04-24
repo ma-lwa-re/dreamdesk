@@ -32,28 +32,28 @@ uint8_t desk_sleep = true;
 
 response_frame_t response_frame = {
     .random = 0x00,
-    .reserved0 = { 0x00 },
+    .reserved0 = {0x00},
     .direction = DESK_DOWN,
-    .reserved1 = { 0x00, 0x00, 0xFF },
+    .reserved1 = {0x00, 0x00, 0xFF},
     .action = DESK_IDLE,
-    .reserved2 = { 0x01 },
+    .reserved2 = {0x01},
     .checksum = 0x00
 };
 
 status_frame_t *status_frame = NULL;
 
 void desk_wake_up() {
-    uint8_t cafebabe[] = { 0xCA, 0xFE, 0xBA, 0xBE };
+    uint8_t cafebabe[] = {0xCA, 0xFE, 0xBA, 0xBE};
     uart_write_bytes(UART_NUM_2, cafebabe, sizeof(cafebabe));
     ESP_LOGI(LOGICDATA_TAG, "Waking up desk!");
 }
 
 void desk_move_up() {
 
-    if (response_frame.action == DESK_IDLE) {
+    if(response_frame.action == DESK_IDLE) {
         ESP_LOGI(LOGICDATA_TAG, "Moving desk up!");
 
-        if (desk_sleep) {
+        if(desk_sleep) {
             desk_wake_up();
         }
     }
@@ -63,10 +63,10 @@ void desk_move_up() {
 
 void desk_move_down() {
 
-    if (response_frame.action == DESK_IDLE) {
+    if(response_frame.action == DESK_IDLE) {
         ESP_LOGI(LOGICDATA_TAG, "Moving desk down!");
 
-        if (desk_sleep) {
+        if(desk_sleep) {
             desk_wake_up();
         }
     }
@@ -76,7 +76,7 @@ void desk_move_down() {
 
 void desk_stop() {
 
-    if (response_frame.action != DESK_MOVE) {
+    if(response_frame.action != DESK_MOVE) {
         return;
     }
     response_frame.action = DESK_STOP;
@@ -86,23 +86,23 @@ void desk_stop() {
 }
 
 void desk_handle_lin_frame(lin_frame_t *lin_frame, uint8_t *event_data, uint8_t event_size) {
-    uint8_t protected_id = lin_frame->protected_id & 0x3F;
     desk_sleep = false;
+    uint8_t protected_id = lin_frame->protected_id & 0x3F;
 
-    if (protected_id == LIN_PROTECTED_ID_SYNC) {
+    if(protected_id == LIN_PROTECTED_ID_SYNC) {
 
-        if (event_size > LIN_HEADER_SIZE) {
+        if(event_size > LIN_HEADER_SIZE) {
             ESP_LOGI(LOGICDATA_TAG, "Pairing sequence %d%%", (uint8_t)((lin_frame->data[0] / 7.0) * 100));
             ESP_LOG_BUFFER_HEX_LEVEL(LOGICDATA_TAG, event_data, event_size, ESP_LOG_DEBUG);
         }
-    } else if (protected_id == LIN_PROTECTED_ID_MOVE) {
+    } else if(protected_id == LIN_PROTECTED_ID_MOVE) {
 
-        if (response_frame.action != DESK_IDLE) {
+        if(response_frame.action != DESK_IDLE) {
             response_frame.random = rand() % 0xFF;                        
-            response_frame.checksum = checksum((uint8_t *) &response_frame, lin_frame->protected_id);
+            response_frame.checksum = checksum((uint8_t*) &response_frame, lin_frame->protected_id);
             uart_write_bytes(UART_NUM_2, &response_frame, sizeof(response_frame));
         }
-    } else if (protected_id == LIN_PROTECTED_ID_STATUS) {
+    } else if(protected_id == LIN_PROTECTED_ID_STATUS) {
 
         if (event_size < (LIN_DATA_SIZE - LIN_HEADER_SIZE)) {
             ESP_LOGW(LOGICDATA_TAG, "Status event too small");
@@ -110,14 +110,14 @@ void desk_handle_lin_frame(lin_frame_t *lin_frame, uint8_t *event_data, uint8_t 
             return;
         }
 
-        status_frame = (status_frame_t*)lin_frame;
+        status_frame = (status_frame_t*) lin_frame;
 
-        if (status_frame->ready == DESK_READY) {
+        if(status_frame->ready == DESK_READY) {
             uint8_t new_desk_height = round(((lin_frame->data[3] << 8) + lin_frame->data[4]) / 10.0);
 
-            if (new_desk_height != current_desk_height) {
+            if(new_desk_height != current_desk_height) {
 
-                if (current_desk_height == 0xFF) {
+                if(current_desk_height == 0xFF) {
                     target_desk_height = new_desk_height;
                 }
 
@@ -131,11 +131,11 @@ void desk_handle_lin_frame(lin_frame_t *lin_frame, uint8_t *event_data, uint8_t 
                 desk_percentage = (lin_frame->data[5] / 255.0) * 100;
                 ESP_LOGI(LOGICDATA_TAG, "Desk height %dcm @ %d%%", current_desk_height, desk_percentage);
             }
-        } else if (status_frame->ready == DESK_NOT_READY) {
+        } else if(status_frame->ready == DESK_NOT_READY) {
 
-            if (status_frame->status == DESK_PAIRING) {
+            if(status_frame->status == DESK_PAIRING) {
 
-                switch (status_frame->status_code) {
+                switch(status_frame->status_code) {
                     case 0x00:
                         ESP_LOGW(LOGICDATA_TAG, "Synchronizing");
                         break;
@@ -146,9 +146,9 @@ void desk_handle_lin_frame(lin_frame_t *lin_frame, uint8_t *event_data, uint8_t 
                         ESP_LOGE(LOGICDATA_TAG, "Unknown status (0x%02x)!", lin_frame->data[5]);
                         break;
                 }
-            } else if (status_frame->status == DESK_ERROR) {
+            } else if(status_frame->status == DESK_ERROR) {
 
-                switch (status_frame->error_code) {
+                switch(status_frame->error_code) {
                     case 0x01:
                         ESP_LOGE(LOGICDATA_TAG, "Firmware Error: Disconnect the Power Unit "
                             "from the Mains. Then, disconnect System from the Power "

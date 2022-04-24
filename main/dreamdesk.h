@@ -51,6 +51,13 @@
 #define MEMORY_5                (0x35)
 #define MEMORY_6                (0x36)
 #define MEMORY_7                (0x37)
+#define MEMORY_1_HEIGHT         (60)
+#define MEMORY_2_HEIGHT         (70)
+#define MEMORY_3_HEIGHT         (80)
+#define MEMORY_4_HEIGHT         (90)
+#define MEMORY_5_HEIGHT         (100)
+#define MEMORY_6_HEIGHT         (110)
+#define MEMORY_7_HEIGHT         (120)
 
 extern uint8_t current_desk_height;
 extern uint8_t target_desk_height;
@@ -59,6 +66,12 @@ extern uint8_t desk_percentage;
 extern uint8_t desk_ready;
 extern uint8_t desk_reset;
 extern uint8_t desk_control;
+
+typedef struct keyboard {
+    uint8_t memory;
+    uint8_t reserved0[1];
+    uint8_t arrow_key;
+} keyboard_t;
 
 void chip_info();
 
