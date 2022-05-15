@@ -47,8 +47,6 @@
 #define SCALE_FAHRENHEIT                    ('F')
 #define SCALE_KELVIN                        ('K')
 
-char scale;
-
 typedef struct msb_lsb {
     uint8_t high;
     uint8_t low;
@@ -62,5 +60,13 @@ typedef struct measurements {
     msb_lsb_t humidity;
     uint8_t humidity_crc;
 } measurements_t;
+
+uint16_t get_co2();
+
+uint16_t get_humidity();
+
+float  get_temperature();
+
+char get_scale();
 
 void sensors_task(void *arg);

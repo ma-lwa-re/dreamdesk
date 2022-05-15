@@ -26,6 +26,8 @@
 #define DESK_MIN_HEIGHT         (60)
 #define DESK_MAX_HEIGHT         (120)
 
+#define UART_PORT               (UART_NUM_2)
+
 #define LIN_PROTECTED_ID_SYNC   (0x06)
 #define LIN_PROTECTED_ID_MOVE   (0x22)
 #define LIN_PROTECTED_ID_STATUS (0x23)
@@ -82,6 +84,8 @@ extern uint8_t desk_percentage;
 extern uint8_t desk_ready;
 extern uint8_t desk_reset;
 extern uint8_t desk_control;
+
+void desk_wake_up();
 
 void desk_move_up();
 

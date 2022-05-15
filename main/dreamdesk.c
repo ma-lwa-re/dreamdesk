@@ -22,9 +22,7 @@
 */
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "driver/uart.h"
 #include "driver/gpio.h"
-#include "hal/uart_types.h"
 #include "sdkconfig.h"
 #include "string.h"
 #include "esp_log.h"
@@ -69,6 +67,17 @@ void desk_set_target_percentage(uint8_t target_percentage) {
 
 void desk_set_target_height(uint8_t target_height) {
 
+    if(current_desk_height == 0xFF) {
+        desk_wake_up();
+        vTaskDelay(5);
+    }
+
+    if(target_height == 0x00) {
+        target_height = current_desk_height + 0x01;
+    } else if(target_height == 0xFE) {
+        target_height = current_desk_height - 0x01;
+    }
+
     if(target_height < DESK_MIN_HEIGHT || target_height > DESK_MAX_HEIGHT) {
         ESP_LOGE(DREAMDESK_TAG, "Target height %dcm is out of range!", target_height);
         return;
@@ -81,7 +90,7 @@ void desk_set_target_height(uint8_t target_height) {
 
 void rx_task(void *arg) {
     uart_config_t uart_config = {
-        .baud_rate = UART_BAUD_RATE,
+        .baud_rate = LIN_BAUD_RATE,
         .data_bits = UART_DATA_8_BITS,
         .parity = UART_PARITY_DISABLE,
         .stop_bits = UART_STOP_BITS_1,
@@ -89,17 +98,10 @@ void rx_task(void *arg) {
         .source_clk = UART_SCLK_APB
     };
 
-    QueueHandle_t uart_queue = NULL;
-
-    ESP_ERROR_CHECK(uart_set_pin(UART_NUM_2, UART_NUM_2_TXD, UART_NUM_2_RXD, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
-    ESP_ERROR_CHECK(uart_driver_install(UART_NUM_2, UART_FIFO_LEN * 2, 0, 10, &uart_queue, 0));
-    ESP_ERROR_CHECK(uart_param_config(UART_NUM_2, &uart_config));
-    ESP_ERROR_CHECK(uart_set_rx_timeout(UART_NUM_2, 1));
-
-    //#ifdef IKEA
-    //ESP_ERROR_CHECK(uart_set_line_inverse(UART_NUM_2, UART_NUM_2_RXD));
-    //ESP_ERROR_CHECK(uart_set_line_inverse(UART_NUM_2, UART_NUM_2_TXD));
-    //#endif
+    ESP_ERROR_CHECK(uart_set_pin(UART_PORT, UART_NUM_2_TXD, UART_NUM_2_RXD, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
+    ESP_ERROR_CHECK(uart_driver_install(UART_PORT, UART_FIFO_LEN * 2, 0, 10, &uart_queue, 0));
+    ESP_ERROR_CHECK(uart_param_config(UART_PORT, &uart_config));
+    ESP_ERROR_CHECK(uart_set_rx_timeout(UART_PORT, 1));
 
     esp_log_level_set(LIN_TAG, ESP_LOG_INFO);
 
@@ -114,10 +116,10 @@ void rx_task(void *arg) {
 
             int16_t protected_id = -1;
             lin_frame_t *lin_frame = NULL;
-            
-            uart_read_bytes(UART_NUM_2, event_data, lin_event.size, 1);
+
+            uart_read_bytes(UART_PORT, event_data, lin_event.size, 1);
             ESP_LOG_BUFFER_HEX_LEVEL(LIN_TAG, event_data, lin_event.size, ESP_LOG_DEBUG);
-            
+
             for(uint8_t i = 0; i <= LIN_HEADER_SIZE; i++) {
 
                 if(event_data[i] == LIN_HEADER_SYNC){
@@ -129,7 +131,7 @@ void rx_task(void *arg) {
                 }
             }
 
-            if (lin_frame == NULL) {
+            if(lin_frame == NULL) {
                 continue;
             }
 
@@ -140,14 +142,15 @@ void rx_task(void *arg) {
                 ESP_LOG_BUFFER_HEX_LEVEL(LIN_TAG, event_data, lin_event.size, ESP_LOG_ERROR);
             }
 
-            // Check checksum ?? nope break the communication, only use for specific tasks
-            /*if (event_size > LIN_HEADER_SIZE) {
-                if (checksum(lin_frame->data, lin_frame->protected_id) != lin_frame->checksum) {
-                    ESP_LOGE(LIN_TAG, "Skipping invalid frame %02x!", lin_frame->checksum);
-                    ESP_LOG_BUFFER_HEX_LEVEL(LIN_TAG, lin_frame, event_size, ESP_LOG_ERROR);
+            if(lin_event.size > LIN_HEADER_SIZE &&
+               lin_event.size < (LIN_HEADER_SIZE + LIN_DATA_SIZE + LIN_CHECKSUM_SIZE)) {
+
+                if(checksum(lin_frame->data, lin_frame->protected_id) != lin_frame->checksum) {
+                    ESP_LOGE(LIN_TAG, "Skipping invalid frame checksum %02x!", lin_frame->checksum);
+                    ESP_LOG_BUFFER_HEX_LEVEL(LIN_TAG, event_data, lin_event.size, ESP_LOG_ERROR);
                     continue;
                 }
-            }*/
+            }
 
             desk_handle_lin_frame(lin_frame, event_data, lin_event.size);
         }

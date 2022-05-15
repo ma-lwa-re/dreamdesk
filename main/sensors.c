@@ -26,9 +26,30 @@
 
 static const char *SENSORS_TAG = "sensors";
 
+uint16_t co2 = 0x00;
+uint16_t humidity = 0x00;
+float temperature = 0x00;
+char scale = SCALE_CELCIUS;
+
 uint8_t scd41_start_periodic_measurement[] = {0x21, 0xB1};
 uint8_t scd41_read_measurement[]           = {0xEC, 0x05};
 uint8_t scd41_stop_periodic_measurement[]  = {0x3F, 0x86};
+
+uint16_t get_co2() {
+    return co2;
+}
+
+uint16_t get_humidity() {
+    return humidity;
+}
+
+float  get_temperature() {
+    return temperature;
+}
+
+char get_scale() {
+    return scale;
+}
 
 void start_periodic_measurement() {
     i2c_cmd_handle_t cmd = i2c_cmd_link_create();
@@ -98,8 +119,6 @@ void sensors_task(void *arg) {
     scale = SCALE_FAHRENHEIT;
     #elif defined(SENSORS_SCALE_K)
     scale = SCALE_KELVIN;
-    #else
-    scale = SCALE_CELCIUS;
     #endif
 
     for(;;) {
@@ -114,9 +133,9 @@ void sensors_task(void *arg) {
 
         start_periodic_measurement();
 
-        uint16_t co2 = 0x00;
-        float temperature = 0x00;
-        uint16_t humidity = 0x00;
+        co2 = 0x00;
+        humidity = 0x00;
+        temperature = 0x00;
 
         for(uint8_t i = 0; i < MEASUREMENT_COUNT; i++) {
             vTaskDelay(UPDATE_INTERVAL / portTICK_PERIOD_MS);

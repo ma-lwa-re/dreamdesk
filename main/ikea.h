@@ -23,26 +23,34 @@
 #include <stdio.h>
 #include "lin.h"
 
-#define DESK_MIN_HEIGHT              (65)
-#define DESK_MAX_HEIGHT              (125)
+#define DESK_MIN_HEIGHT               (65)
+#define DESK_MAX_HEIGHT               (125)
+
+#define UART_PORT                     (UART_NUM_2)
 
 #undef LIN_DATA_SIZE
-#define LIN_DATA_SIZE                (0x04)
+#define LIN_DATA_SIZE                 (0x03)
 
-#define LIN_PROTECTED_ID_SYNC        (0x06) // Not really needed ?? not tested yet
-#define LIN_PROTECTED_ID_KEEP_ALIVE  (0x11)
-#define LIN_PROTECTED_ID_MOVE        (0x12)
-#define LIN_PROTECTED_ID_STATUS      (0x08)
+#define LIN_PROTECTED_ID_SYNC         (0x06) // Not really needed ?? not tested yet
+#define LIN_PROTECTED_ID_KEEP_ALIVE   (0x11)
+#define LIN_PROTECTED_ID_MOVE         (0x12)
+#define LIN_PROTECTED_ID_STATUS_LEFT  (0x08)
+#define LIN_PROTECTED_ID_STATUS_RIGHT (0x09)
 
-#define DESK_MOVE_THRESHOLD          (0x02)
-#define DESK_UP                      (0x86)
-#define DESK_DOWN                    (0x85)
-#define DESK_IDLE                    (0xFC)
-//#define DESK_BEFORE_MOVE             (0xC4) // Not needed ??
-//#define DESK_BEFORE_STOP             (0x84) // To test ??
-#define DESK_STOP                    (0x87)
-#define DESK_STATUS_READY            (0x60)
-#define DESK_STATUS_BUSY             (0x02) // Frist value after init ??
+#define DESK_MOVE_THRESHOLD           (0x02)
+#define DESK_BEFORE_MOVE              (0xC4)
+#define DESK_UP                       (0x86)
+#define DESK_DOWN                     (0x85)
+#define DESK_STOP                     (0x87)
+#define DESK_BEFORE_IDLE              (0x84)
+#define DESK_IDLE                     (0xFC)
+#define DESK_STATUS_READY             (0x60)
+#define DESK_STATUS_BUSY              (0x02) // Frist value after init ??
+
+typedef struct height {
+    uint8_t msb;
+    uint8_t lsb;
+} height_t;
 
 typedef struct lin_frame {
     uint8_t protected_id;
@@ -72,6 +80,8 @@ extern uint8_t desk_percentage;
 extern uint8_t desk_ready;
 extern uint8_t desk_reset;
 extern uint8_t desk_control;
+
+void desk_wake_up();
 
 void desk_move_up();
 

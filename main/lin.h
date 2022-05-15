@@ -21,17 +21,22 @@
 * SOFTWARE.
 */
 #include <stdio.h>
+#include "driver/uart.h"
 
-#define LIN_HEADER_BREAK        (0x00)
-#define LIN_HEADER_SYNC         (0x55)
-#define LIN_HEADER_SIZE         (0x03)
-#define LIN_DATA_SIZE           (0x08)
-#define LIN_CHECKSUM_SIZE       (0x01)
-#define LIN_PROTECTED_ID_MIN    (0x00)
-#define LIN_PROTECTED_ID_MAX    (0x3F)
+#define LIN_BAUD_RATE               (19200)
+#define LIN_HEADER_BREAK_DURATION   (678)
+#define LIN_HEADER_BREAK            (0x00)
+#define LIN_HEADER_SYNC             (0x55)
+#define LIN_HEADER_SIZE             (0x03)
+#define LIN_DATA_SIZE               (0x08)
+#define LIN_CHECKSUM_SIZE           (0x01)
+#define LIN_PROTECTED_ID_MIN        (0x00)
+#define LIN_PROTECTED_ID_MAX        (0x3F)
 
 #define P(pid, shift) ((pid & (1 << shift)) >> shift)
 
 uint8_t checksum(uint8_t *lin_frame, uint8_t protected_id);
 
 uint8_t parity(uint8_t pid);
+
+void master_start_frame(uint8_t pid);

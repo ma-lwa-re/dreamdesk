@@ -22,7 +22,6 @@
 */
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "driver/uart.h"
 #include "esp_log.h"
 #include "math.h"
 #include "logicdata.h"
@@ -44,34 +43,36 @@ status_frame_t *status_frame = NULL;
 
 void desk_wake_up() {
     uint8_t cafebabe[] = {0xCA, 0xFE, 0xBA, 0xBE};
-    uart_write_bytes(UART_NUM_2, cafebabe, sizeof(cafebabe));
+    uart_write_bytes(UART_PORT, cafebabe, sizeof(cafebabe));
     ESP_LOGI(LOGICDATA_TAG, "Waking up desk!");
+}
+
+void desk_move(uint8_t direction) {
+
+    if(response_frame.action == DESK_IDLE) {
+        response_frame.direction = direction;
+        response_frame.action = DESK_MOVE;
+
+        if(desk_sleep) {
+            desk_wake_up();
+        }
+    }
 }
 
 void desk_move_up() {
 
     if(response_frame.action == DESK_IDLE) {
         ESP_LOGI(LOGICDATA_TAG, "Moving desk up!");
-
-        if(desk_sleep) {
-            desk_wake_up();
-        }
     }
-    response_frame.direction = DESK_UP;
-    response_frame.action = DESK_MOVE;
+    desk_move(DESK_UP);
 }
 
 void desk_move_down() {
 
     if(response_frame.action == DESK_IDLE) {
         ESP_LOGI(LOGICDATA_TAG, "Moving desk down!");
-
-        if(desk_sleep) {
-            desk_wake_up();
-        }
     }
-    response_frame.direction = DESK_DOWN;
-    response_frame.action = DESK_MOVE;
+    desk_move(DESK_DOWN);
 }
 
 void desk_stop() {
@@ -79,10 +80,10 @@ void desk_stop() {
     if(response_frame.action != DESK_MOVE) {
         return;
     }
+    ESP_LOGI(LOGICDATA_TAG, "Stopping desk!");
     response_frame.action = DESK_STOP;
     vTaskDelay(10);
     response_frame.action = DESK_IDLE;
-    ESP_LOGI(LOGICDATA_TAG, "Stopping desk!");
 }
 
 void desk_handle_lin_frame(lin_frame_t *lin_frame, uint8_t *event_data, uint8_t event_size) {
@@ -100,11 +101,11 @@ void desk_handle_lin_frame(lin_frame_t *lin_frame, uint8_t *event_data, uint8_t 
         if(response_frame.action != DESK_IDLE) {
             response_frame.random = rand() % 0xFF;                        
             response_frame.checksum = checksum((uint8_t*) &response_frame, lin_frame->protected_id);
-            uart_write_bytes(UART_NUM_2, &response_frame, sizeof(response_frame));
+            uart_write_bytes(UART_PORT, &response_frame, sizeof(response_frame));
         }
     } else if(protected_id == LIN_PROTECTED_ID_STATUS) {
 
-        if (event_size < (LIN_DATA_SIZE - LIN_HEADER_SIZE)) {
+        if(event_size < (LIN_HEADER_SIZE + LIN_DATA_SIZE + LIN_CHECKSUM_SIZE)) {
             ESP_LOGW(LOGICDATA_TAG, "Status event too small");
             ESP_LOG_BUFFER_HEX_LEVEL(LOGICDATA_TAG, event_data, event_size, ESP_LOG_WARN);
             return;
@@ -121,14 +122,8 @@ void desk_handle_lin_frame(lin_frame_t *lin_frame, uint8_t *event_data, uint8_t 
                     target_desk_height = new_desk_height;
                 }
 
-                /*if (checksum(lin_frame->data, lin_frame->protected_id) != lin_frame->checksum) {
-                    ESP_LOGE(LIN_TAG, "Skipping invalid r %02x!", lin_frame->checksum);
-                    ESP_LOG_BUFFER_HEX_LEVEL(LIN_TAG, lin_frame, event_size, ESP_LOG_ERROR);
-                    return;
-                }*/
-
                 current_desk_height = new_desk_height;
-                desk_percentage = (lin_frame->data[5] / 255.0) * 100;
+                desk_percentage = round((lin_frame->data[5] / 255.0) * 100);
                 ESP_LOGI(LOGICDATA_TAG, "Desk height %dcm @ %d%%", current_desk_height, desk_percentage);
             }
         } else if(status_frame->ready == DESK_NOT_READY) {

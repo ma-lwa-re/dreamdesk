@@ -5,7 +5,7 @@ It has been tested and currently works with any desk relying on the Dynamic Moti
 
 ## Config
 ### Select features
-Edit the `CMakeLists.txt` file to select what kind of desk you want to control and other optional features.
+Edit the [`CMakeLists.txt`](CMakeLists.txt) file to select what kind of desk you want to control and other optional features.
 ```
 # REQUIRED: Choose your desk type (LOGICDATA | IKEA)
 set(DESK_TYPE "LOGICDATA")
@@ -21,12 +21,12 @@ set(SENSORS_SCALE "C")
 ```
 
 ### Wifi
-Rename `wifi.h.default` to `wifi.h` and set your Wifi SSID and password. You can leave those default values if you're not using any home automation ecosystem.
+Rename [`wifi.h.default`](main/wifi.h.default) to `wifi.h` and set your Wifi SSID and password. You can leave those default values if you're not using any home automation ecosystem.
 ```
 mv main/wifi.h.default main/wifi.h
 
-#define WIFI_SSID      "WIFI_SSID"
-#define WIFI_PASS      "WIFI_PASSWORD"
+#define WIFI_SSID      "DEFAULT_WIFI_SSID"
+#define WIFI_PASS      "DEFAULT_WIFI_PASS"
 ```
 
 ## Install

@@ -24,6 +24,7 @@
 #include "homekit.h"
 #include "wifi.h"
 #include "dreamdesk.h"
+#include "sensors.h"
 
 #define IP 1
 #include "HAP.h"
@@ -685,10 +686,10 @@ static HAPAccessory accessory = { .aid = 1,
                                   .category = kHAPAccessoryCategory_WindowCoverings,
                                   .name = "Dreamdesk Remote Control",
                                   .manufacturer = "ma.lwa.re",
-                                  .model = "Dreamdesk v2.3",
+                                  .model = "Dreamdesk v2.4",
                                   .serialNumber = "DEADBEEFBABE",
-                                  .firmwareVersion = "1",
-                                  .hardwareVersion = "1",
+                                  .firmwareVersion = "2.4",
+                                  .hardwareVersion = "2.4",
                                   .services = (const HAPService* const[]) { &accessoryInformationService,
                                                                             &hapProtocolInformationService,
                                                                             &pairingService,
