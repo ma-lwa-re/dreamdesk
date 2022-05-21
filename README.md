@@ -1,7 +1,11 @@
 # The Dreamdesk Project
 The aim of this project was to create a framework that makes compatible any electrical standing desk with a home automation solution like Apple Homekit, Google Home, or Amazon Alexa, allowing your desk to be controlled by your phone, a computer, or a home speaker.
 
-It has been tested and currently works with any desk relying on the Dynamic Motion system by Logicdata, like Yaasa Desks, Gravit iDesk, etc. The IKEA Bekant desks will be supported soon. The code was developped in C for the ESP32 microcontrollers family.
+It has been tested and currently works with any desk relying on the Dynamic Motion system by Logicdata, like the Yaasa Desks, Gravit iDesk, or the Lidle LifeUP in addition to the IKEA Bekant desks.
+
+The code was developped in C for the ESP32 microcontrollers family. A detailed write-up about the project is available at
+
+- https://ma.lwa.re/dreamdesk
 
 ## Config
 ### Select features
@@ -21,7 +25,7 @@ set(SENSORS_SCALE "C")
 ```
 
 ### Wifi
-Rename [`wifi.h.default`](main/wifi.h.default) to `wifi.h` and set your Wifi SSID and password. You can leave those default values if you're not using any home automation ecosystem.
+Rename [`wifi.h.defaults`](main/wifi.h.defaults) to `wifi.h` and set your Wifi SSID and password. You can leave those default values if you're not using any home automation ecosystem.
 ```
 mv main/wifi.h.default main/wifi.h
 

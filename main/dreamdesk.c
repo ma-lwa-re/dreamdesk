@@ -61,21 +61,22 @@ void memory_init() {
     ESP_ERROR_CHECK(flash_error);
 }
 
-void desk_set_target_percentage(uint8_t target_percentage) {
-    desk_set_target_height((((DESK_MAX_HEIGHT - DESK_MIN_HEIGHT) / 100.0) * target_percentage) + DESK_MIN_HEIGHT);
-}
-
 void desk_set_target_height(uint8_t target_height) {
+
+    if(target_desk_height != (target_height + 1) &&
+       target_desk_height != (target_height - 1)) {
+           desk_stop();
+    }
 
     if(current_desk_height == 0xFF) {
         desk_wake_up();
-        vTaskDelay(5);
-    }
+        vTaskDelay(10);
 
-    if(target_height == 0x00) {
-        target_height = current_desk_height + 0x01;
-    } else if(target_height == 0xFE) {
-        target_height = current_desk_height - 0x01;
+        if(target_height == 0x00) {
+            target_height = current_desk_height + 0x01;
+        } else if(target_height == 0xFE) {
+            target_height = current_desk_height - 0x01;
+        }
     }
 
     if(target_height < DESK_MIN_HEIGHT || target_height > DESK_MAX_HEIGHT) {
@@ -86,6 +87,10 @@ void desk_set_target_height(uint8_t target_height) {
     target_desk_height = target_height;
     desk_control = true;
     ESP_LOGI(DREAMDESK_TAG, "Setting the desk at %dcm", target_height);
+}
+
+void desk_set_target_percentage(uint8_t target_percentage) {
+    desk_set_target_height((((DESK_MAX_HEIGHT - DESK_MIN_HEIGHT) / 100.0) * target_percentage) + DESK_MIN_HEIGHT);
 }
 
 void rx_task(void *arg) {
@@ -180,7 +185,7 @@ void move_task(void *arg) {
                 target_desk_height = current_desk_height;
             }
         }
-        vTaskDelay(10);
+        vTaskDelay(5);
     }
 }
 

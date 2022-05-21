@@ -35,11 +35,21 @@ response_frame_t response_frame = {
     .checksum = 0x00
 };
 
-/*response_frame_t keep_alive_frame = {
-    .height = {0x00, 0x00},
+response_frame_t1 response_frame1 = {
+    //.height = {0x00, 0x00},
+    .height.msb = 0x00,
+    .height.lsb = 0x00,
+    .action = DESK_IDLE,
+    .checksum = 0x00
+};
+
+response_frame_t1 keep_alive_frame1 = {
+    //.height = {0x00, 0x00},
+    .height.msb = 0x00,
+    .height.lsb = 0x00,
     .action = 0x00,
     .checksum = 0xEE
-};*/
+};
 
 response_frame_t keep_alive_frame = {
     .height0 = 0x00,
@@ -51,22 +61,13 @@ response_frame_t keep_alive_frame = {
 volatile uint8_t msb0 = 0xAA;
 volatile uint8_t lsb0 = 0xBB;
 
-status_frame_t *status_frame = NULL;
+status_frame_t *status_frame_right = NULL;
+status_frame_t *status_frame_left = NULL;
 
 void master_frames() {
     master_start_frame(LIN_PROTECTED_ID_KEEP_ALIVE);
-    master_start_frame(LIN_PROTECTED_ID_STATUS_LEFT);
     master_start_frame(LIN_PROTECTED_ID_STATUS_RIGHT);
-
-    // SEND 5x PID 0x10 ??
-    //master_start_frame(0x10);
-    //master_start_frame(0x10);
-    //master_start_frame(0x10);
-    //master_start_frame(0x10);
-    //master_start_frame(0x10);
-    // SEND 1x PID 0x01 ??
-    //master_start_frame(0x01);
-
+    master_start_frame(LIN_PROTECTED_ID_STATUS_LEFT);
     master_start_frame(LIN_PROTECTED_ID_MOVE);
 }
 
@@ -127,10 +128,10 @@ void desk_handle_lin_frame(lin_frame_t *lin_frame, uint8_t *event_data, uint8_t 
         ESP_LOG_BUFFER_HEX_LEVEL(IKEA_TAG, &keep_alive_frame, sizeof(keep_alive_frame), ESP_LOG_DEBUG);
     } else if(protected_id == LIN_PROTECTED_ID_MOVE) {
 
-        if(status_frame != NULL) {
+        if(status_frame_left != NULL && status_frame_right != NULL) {
             response_frame.height0 = msb0;
             response_frame.height1 = lsb0;
-            response_frame.checksum = checksum((uint8_t*) &response_frame, LIN_PROTECTED_ID_MOVE);
+            response_frame.checksum = checksum((uint8_t*) &response_frame, lin_frame->protected_id);
 
             /*
             uint8_t ppp = 0x92;
@@ -142,9 +143,10 @@ void desk_handle_lin_frame(lin_frame_t *lin_frame, uint8_t *event_data, uint8_t 
             uart_write_bytes(UART_PORT, &response_frame, sizeof(response_frame));
 
             ESP_LOG_BUFFER_HEX_LEVEL(IKEA_TAG, &response_frame, sizeof(response_frame), ESP_LOG_DEBUG);
+            status_frame_right = NULL;
+            status_frame_left = NULL;
         }
-    //} else if(protected_id == LIN_PROTECTED_ID_STATUS_LEFT || protected_id == LIN_PROTECTED_ID_STATUS_RIGHT) {
-    } else if(protected_id == LIN_PROTECTED_ID_STATUS_LEFT) {
+    } else if(protected_id == LIN_PROTECTED_ID_STATUS_RIGHT || protected_id == LIN_PROTECTED_ID_STATUS_LEFT) {
 
         if(event_size < (LIN_HEADER_SIZE + LIN_DATA_SIZE + LIN_CHECKSUM_SIZE)) {
             ESP_LOGW(IKEA_TAG, "Status event too small");
@@ -152,8 +154,13 @@ void desk_handle_lin_frame(lin_frame_t *lin_frame, uint8_t *event_data, uint8_t 
             return;
         }
 
-        status_frame = (status_frame_t*) lin_frame;
-        uint16_t new_desk_height = status_frame->height0 + (status_frame->height1 << 8);
+        if(protected_id == LIN_PROTECTED_ID_STATUS_LEFT) {
+            status_frame_left = (status_frame_t*) lin_frame;
+            return;
+        }
+
+        status_frame_right = (status_frame_t*) lin_frame;
+        uint16_t new_desk_height = status_frame_right->height0 + (status_frame_right->height1 << 8);
         new_desk_height = round((6370.5 + new_desk_height) / 100.5);
 
         msb0 = lin_frame->data[0];
@@ -162,9 +169,14 @@ void desk_handle_lin_frame(lin_frame_t *lin_frame, uint8_t *event_data, uint8_t 
         //response_frame.height0 = status_frame->height0;
         //response_frame.height1 = status_frame->height1;
 
-        ESP_LOG_BUFFER_HEX_LEVEL(IKEA_TAG, &status_frame, sizeof(status_frame), ESP_LOG_DEBUG);
+        ESP_LOG_BUFFER_HEX_LEVEL(IKEA_TAG, &status_frame_right, sizeof(status_frame_right), ESP_LOG_DEBUG);
 
         if(new_desk_height != current_desk_height) {
+
+            if(current_desk_height == 0xFF) {
+                target_desk_height = new_desk_height;
+            }
+
             current_desk_height = new_desk_height;
             desk_percentage = round((current_desk_height / (float)DESK_MAX_HEIGHT) * 100);
             ESP_LOGI(IKEA_TAG, "Desk height %dcm @ %d%%", current_desk_height, desk_percentage);

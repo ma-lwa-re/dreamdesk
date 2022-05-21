@@ -34,8 +34,8 @@
 #define LIN_PROTECTED_ID_SYNC         (0x06) // Not really needed ?? not tested yet
 #define LIN_PROTECTED_ID_KEEP_ALIVE   (0x11)
 #define LIN_PROTECTED_ID_MOVE         (0x12)
-#define LIN_PROTECTED_ID_STATUS_LEFT  (0x08)
-#define LIN_PROTECTED_ID_STATUS_RIGHT (0x09)
+#define LIN_PROTECTED_ID_STATUS_RIGHT (0x08)
+#define LIN_PROTECTED_ID_STATUS_LEFT  (0x09)
 
 #define DESK_MOVE_THRESHOLD           (0x02)
 #define DESK_BEFORE_MOVE              (0xC4)
@@ -65,6 +65,19 @@ typedef struct status_frame {
     uint8_t status;
     uint8_t checksum;
 } status_frame_t;
+
+typedef struct status_frame1 {
+    uint8_t protected_id;
+    height_t height;
+    uint8_t status;
+    uint8_t checksum;
+} status_frame_t1;
+
+typedef struct response_frame1 {
+    height_t height;
+    uint8_t action;
+    uint8_t checksum;
+} response_frame_t1;
 
 typedef struct response_frame {
     uint8_t height0;

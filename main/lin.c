@@ -34,10 +34,10 @@ master_frame_t master_frame = {
     .pid = 0x00
 };
 
-uint8_t checksum(uint8_t *lin_frame, uint8_t protected_id) {
+uint8_t checksum(uint8_t *lin_data, uint8_t protected_id) {
     uint16_t checksum = (protected_id & 0x3F) | parity(protected_id);
     for(uint8_t i = 0; i < LIN_DATA_SIZE; i++) {
-        checksum += lin_frame[i];
+        checksum += lin_data[i];
         if(checksum > 0xFF) {
             checksum -= 0xFF;
         }
@@ -52,9 +52,7 @@ uint8_t parity(uint8_t pid) {
 }
 
 void master_start_frame(uint8_t pid) {
-    //vTaskDelay(1); // 5-8 ms
-    //ets_delay_us(10000); // 6-9 ms
-    ets_delay_us(6000); // 2.6 ms
+    ets_delay_us(6000);
 
     master_frame.pid = pid | parity(pid);
 
@@ -67,12 +65,4 @@ void master_start_frame(uint8_t pid) {
 
     xQueueSend(uart_queue, (void*) &(uart_event_t){.type = UART_BREAK}, 0);
     uart_write_bytes(UART_PORT, &master_frame, sizeof(master_frame));
-    //uint8_t dummy = 0xFF;
-    //uart_write_bytes_with_break(UART_PORT, &dummy, 1, 13);
-
-    //uint8_t zero = 0x00;
-    //uart_set_baudrate(UART_PORT, LIN_BAUD_RATE >> 1);
-    //uart_write_bytes(UART_PORT, (char *)&zero, 1); // send a zero byte.  This call must be blocking.
-    //uart_wait_tx_done(UART_PORT, 2);                // shouldn't be necessary??
-    //uart_set_baudrate(UART_PORT, LIN_BAUD_RATE);
 }

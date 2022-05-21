@@ -82,9 +82,9 @@ void desk_handle_lin_frame(lin_frame_t *lin_frame, uint8_t *event_data, uint8_t 
 
 void desk_update_height(status_frame_t *status_frame);
 
-void desk_set_target_percentage(uint8_t target_percentage);
-
 void desk_set_target_height(uint8_t target_height);
+
+void desk_set_target_percentage(uint8_t target_percentage);
 
 void rx_task(void *arg);
 
