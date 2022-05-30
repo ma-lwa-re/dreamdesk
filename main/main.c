@@ -21,11 +21,17 @@
 * SOFTWARE.
 */
 #include "dreamdesk.h"
-#if defined(HOMEKIT)
-#include "homekit.h"
+#if defined(WIFI_ON)
+#include "wifi.h"
 #endif
 #if defined(SENSORS_ON)
 #include "sensors.h"
+#endif
+#if defined(OTA_UPDATES_ON)
+#include "ota.h"
+#endif
+#if defined(HOMEKIT)
+#include "homekit.h"
 #endif
 #include "esp_log.h"
 #include "string.h"
@@ -42,8 +48,29 @@ void app_main() {
     chip_info();
     memory_init();
 
+    #if defined(WIFI_ON)
+    app_wifi_credentials();
+    app_wifi_init();
+    app_wifi_connect();
+    #endif
+
     #if defined(SENSORS_ON)
     xTaskCreate(sensors_task, "sensors_task", UART_STACK_SIZE, NULL, configMAX_PRIORITIES-9, NULL);
+    #endif
+
+    #if defined(OTA_UPDATES_ON)
+    const esp_partition_t *running_partition = esp_ota_get_running_partition();
+    esp_ota_img_states_t ota_state;
+
+    if(esp_ota_get_state_partition(running_partition, &ota_state) == ESP_OK) {
+
+        if(ota_state == ESP_OTA_IMG_PENDING_VERIFY && esp_ota_mark_app_valid_cancel_rollback() == ESP_OK) {
+            ESP_LOGI(DREAMDESK_TAG, "App is valid, rollback cancelled successfully!");
+        } else {
+            ESP_LOGE(DREAMDESK_TAG, "Failed to cancel rollback");
+        }
+    }
+    xTaskCreate(ota_task, "ota_task", OTA_STACK_SIZE, NULL, configMAX_PRIORITIES-8, NULL);
     #endif
 
     #if defined(HOMEKIT) || defined(NEST) || defined(ALEXA)

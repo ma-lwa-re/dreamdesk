@@ -5,11 +5,12 @@ It has been tested and currently works with any desk relying on the Dynamic Moti
 
 The code was developped in C for the ESP32 microcontrollers family. A detailed write-up about the project is available at
 
-- https://ma.lwa.re/dreamdesk
+- [`https://ma.lwa.re/dreamdesk`](https://ma.lwa.re/dreamdesk)
 
 ## Config
-### Select features
+### Select Features
 Edit the [`CMakeLists.txt`](CMakeLists.txt) file to select what kind of desk you want to control and other optional features.
+The project version will be used to check if a newer version is available during the OTA update process.
 ```
 # REQUIRED: Choose your desk type (LOGICDATA | IKEA)
 set(DESK_TYPE "LOGICDATA")
@@ -17,23 +18,20 @@ set(DESK_TYPE "LOGICDATA")
 # OPTIONAL: Choose your home automation ecosystem (HOMEKIT | NEST | ALEXA | NONE)
 set(HOME_AUTOMATION "HOMEKIT")
 
-# OPTIONAL: Use the sensors (ON | OFF)
+# OPTIONAL: Enable sensors (ON | OFF)
 set(SENSORS ON)
 
 # OPTIONAL: Set the temperature scale (C | F | K)
 set(SENSORS_SCALE "C")
+
+# OPTIONAL: Enable Over The Air (OTA) updates (ON | OFF)
+set(OTA_UPDATES ON)
+
+# OPTIONAL: Set the project version
+set(PROJECT_VER "2.4.0.1")
 ```
 
-### Wifi
-Rename [`wifi.h.defaults`](main/wifi.h.defaults) to `wifi.h` and set your Wifi SSID and password. You can leave those default values if you're not using any home automation ecosystem.
-```
-mv main/wifi.h.default main/wifi.h
-
-#define WIFI_SSID      "DEFAULT_WIFI_SSID"
-#define WIFI_PASS      "DEFAULT_WIFI_PASS"
-```
-
-## Install
+## Setup
 ### Espressif SDK
 ```
 git clone -b v4.4 --recursive https://github.com/espressif/esp-idf.git esp-idf-v4.4
@@ -61,7 +59,7 @@ cd Tools
 cd Dreamdesk
 cp ../../../tools/accessory_setup/accessory_setup.csv .
 python $IDF_PATH/components/nvs_flash/nvs_partition_generator/nvs_partition_gen.py generate accessory_setup.csv accessory_setup.bin 0x6000
-esptool.py -p $ESPPORT write_flash 0x340000 accessory_setup.bin
+esptool.py -p $ESPPORT write_flash 0x34C000 accessory_setup.bin
 ```
 
 ### Resetting HomeKit Pairing
@@ -78,11 +76,33 @@ cd $IDF_PATH/../
 git clone --recursive https://github.com/ma-lwa-re/dreamdesk.git
 cd dreamdesk
 idf.py set-target esp32s3
-export ESPPORT=/dev/tty.usbserial-130
+export ESPPORT=/dev/cu.usbserial-0001
 idf.py build flash
 ```
 
-## Console output
+### Wifi
+The wifi credentials were previously hardcoded in the [`wifi.h`](main/wifi.h) header, but are now directly written in a standalone partition on the ESP32.
+
+It has the advantage that no secrets are stored in the code section anymore, and thus allows the same code to run on multiple devices, over-the-air (OTA) updates, or modification of wifi credentials without having to reflash the device.
+
+```
+cp wifi.csv $IDF_PATH/components/nvs_flash/nvs_partition_generator
+cd $IDF_PATH/components/nvs_flash/nvs_partition_generator
+# Edit the wifi.csv and replace the DEFAULT_SSID and DEFAULT_PASSWORD strings
+python3 nvs_partition_gen.py generate wifi.csv wifi.bin 0x3000
+esptool.py -p $ESPPORT write_flash 0x340000 wifi.bin
+```
+
+### Code Signing
+The integrity of the application can be secure and checked using an RSA signature scheme. The binary is signed after compilation with the private key that can be generated with `espsecure.py` or `openssl`, and the corresponding public key is embedded into the binary for verification.
+
+```
+espsecure.py generate_signing_key --version 2 secure_boot_signing_key.pem
+```
+
+The bootloader will be compiled with code to verify that an app is signed before booting it. In addition, the signature will be also proofed before updating the firmware and adds significant security against network-based attacks by preventing spoofing of OTA updates.
+
+## Console Output
 ```
 sudo cu -l $ESPPORT -s 115200
 ```
@@ -108,7 +128,7 @@ dreamdesk
 │   ├── sensors.c
 │   ├── sensors.h
 │   ├── wifi.c
-│   └── wifi.h.default
+│   └── wifi.h
 ├── partitions.csv
 ├── sdkconfig
 └── sdkconfig.defaults
@@ -118,6 +138,8 @@ dreamdesk
 - [ ] IKEA desk testing
 - [x] PCB prototype
 - [x] PCB assembly
+- [x] OTA updates
+- [ ] NVS encryption
 - [ ] HomeKit memory integration
 - [ ] HomeKit sensors integration
 - [x] Sensors (humidity + air + temperature)

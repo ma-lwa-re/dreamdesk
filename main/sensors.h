@@ -38,7 +38,7 @@
 #define I2C_NACK_VAL                        (0x01)
 #define SCD41_SENSOR_ADDR                   (0x62)
 #define MEASUREMENT_COUNT                   (0x05)
-#define SLEEP_INTERVAL                      (1000 * 60 * 15)
+#define SLEEP_INTERVAL_15_MIN               (1000 * 60 * 15)
 #define UPDATE_INTERVAL                     (6000)
 #define CO2_LEVEL_ERROR                     (100)
 #define CO2_LEVEL_GOOD                      (800)

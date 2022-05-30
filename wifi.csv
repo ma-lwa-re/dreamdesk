@@ -1,0 +1,4 @@
+key,type,encoding,value
+wifi,namespace,,
+ssid,data,string,DEFAULT_SSID
+password,data,string,DEFAULT_PASSWORD

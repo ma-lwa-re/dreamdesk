@@ -128,7 +128,7 @@ void desk_handle_lin_frame(lin_frame_t *lin_frame, uint8_t *event_data, uint8_t 
         ESP_LOG_BUFFER_HEX_LEVEL(IKEA_TAG, &keep_alive_frame, sizeof(keep_alive_frame), ESP_LOG_DEBUG);
     } else if(protected_id == LIN_PROTECTED_ID_MOVE) {
 
-        if(status_frame_left != NULL && status_frame_right != NULL) {
+        if(status_frame_right != NULL && status_frame_left != NULL) {
             response_frame.height0 = msb0;
             response_frame.height1 = lsb0;
             response_frame.checksum = checksum((uint8_t*) &response_frame, lin_frame->protected_id);
@@ -143,8 +143,7 @@ void desk_handle_lin_frame(lin_frame_t *lin_frame, uint8_t *event_data, uint8_t 
             uart_write_bytes(UART_PORT, &response_frame, sizeof(response_frame));
 
             ESP_LOG_BUFFER_HEX_LEVEL(IKEA_TAG, &response_frame, sizeof(response_frame), ESP_LOG_DEBUG);
-            status_frame_right = NULL;
-            status_frame_left = NULL;
+            status_frame_right = status_frame_left = NULL;
         }
     } else if(protected_id == LIN_PROTECTED_ID_STATUS_RIGHT || protected_id == LIN_PROTECTED_ID_STATUS_LEFT) {
 

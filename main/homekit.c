@@ -933,9 +933,6 @@ static void InitializePlatform() {
             &accessorySetup, &(const HAPPlatformAccessorySetupOptions) { .keyValueStore = &platform.factoryKeyValueStore });
     platform.hapPlatform.accessorySetup = &accessorySetup;
 
-    // Initialise Wi-Fi
-    app_wifi_init();
-
     // TCP stream manager.
     HAPPlatformTCPStreamManagerCreate(&platform.tcpStreamManager, &(const HAPPlatformTCPStreamManagerOptions) {
         /* Listen on all available network interfaces. */
@@ -1068,9 +1065,6 @@ static void InitializeIP() {
     platform.hapAccessoryServerOptions.ip.accessoryServerStorage = &ipAccessoryServerStorage;
 
     platform.hapPlatform.ip.tcpStreamManager = &platform.tcpStreamManager;
-
-    // Connect to Wi-Fi
-    app_wifi_connect();
 }
 
 void home_task(void *arg) {

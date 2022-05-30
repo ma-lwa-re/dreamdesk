@@ -40,6 +40,7 @@
 #define UART_NUM_2_TXD          (GPIO_NUM_4)
 #define UART_NUM_2_RXD          (GPIO_NUM_5)
 #define UART_STACK_SIZE         (4096)
+#define OTA_STACK_SIZE          (UART_STACK_SIZE * 2)
 #define CONSOLE_BAUD_RATE       (115200)
 #define ARROW_KEY_UP            (0x41)
 #define ARROW_KEY_DOWN          (0x42)

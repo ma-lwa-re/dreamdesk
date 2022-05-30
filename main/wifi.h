@@ -21,10 +21,12 @@
 * SOFTWARE.
 */
 #include "esp_system.h"
-
-#define WIFI_SSID      "DEFAULT_WIFI_SSID"
-#define WIFI_PASS      "DEFAULT_WIFI_PASS"
+#include "esp_wifi.h"
 
 void app_wifi_init();
 
+void app_wifi_credentials();
+
 esp_err_t app_wifi_connect();
+
+esp_err_t app_wifi_disconnect();

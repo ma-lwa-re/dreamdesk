@@ -175,6 +175,6 @@ void sensors_task(void *arg) {
             ESP_LOGE(SENSORS_TAG, "CO2 %4d ppm - Temperature %.1f °%c - Humidity %d%%", co2, temperature, scale, humidity);
         }
 
-        vTaskDelay(SLEEP_INTERVAL / portTICK_PERIOD_MS);
+        vTaskDelay(SLEEP_INTERVAL_15_MIN / portTICK_PERIOD_MS);
     }
 }

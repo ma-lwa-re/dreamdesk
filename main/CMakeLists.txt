@@ -5,10 +5,13 @@ elseif(DESK_TYPE STREQUAL "IKEA")
 endif()
 
 if(HOME_AUTOMATION STREQUAL "HOMEKIT")
+    set(WIFI ON)
     set(INCLUDE_HOME ./wifi.c ./homekit.c)
 elseif(HOME_AUTOMATION STREQUAL "NEST")
+    set(WIFI ON)
     set(INCLUDE_HOME ./wifi.c ./nest.c)
 elseif(HOME_AUTOMATION STREQUAL "ALEXA")
+    set(WIFI ON)
     set(INCLUDE_HOME ./wifi.c ./alexa.c)
 endif()
 
@@ -17,6 +20,13 @@ if(SENSORS)
     add_definitions(-DSENSORS_SCALE_${SENSORS_SCALE})
 endif()
 
-idf_component_register(SRCS ./main.c ./dreamdesk.c ./lin.c ${INCLUDE_DESK} ${INCLUDE_HOME} ${INCLUDE_SENSORS} INCLUDE_DIRS ".")
+if(OTA_UPDATES)
+    set(WIFI ON)
+    set(INCLUDE_OTA_UPDATES ./wifi.c ./ota.c)
+endif()
 
-add_definitions(-D${DESK_TYPE} -D${HOME_AUTOMATION} -DSENSORS_${SENSORS})
+idf_component_register(SRCS ./main.c ./dreamdesk.c ./lin.c ${INCLUDE_DESK} ${INCLUDE_HOME}
+                       ${INCLUDE_SENSORS} ${INCLUDE_OTA_UPDATES} INCLUDE_DIRS ".")
+
+add_definitions(-DPROJECT_NAME="${CMAKE_PROJECT_NAME}" -DPROJECT_VER="${PROJECT_VER}" -D${DESK_TYPE}
+                -DWIFI_${WIFI} -D${HOME_AUTOMATION} -DSENSORS_${SENSORS} -DOTA_UPDATES_${OTA_UPDATES})

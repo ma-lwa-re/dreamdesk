@@ -13,6 +13,12 @@ set(SENSORS ON)
 # OPTIONAL: Set the temperature scale (C | F | K)
 set(SENSORS_SCALE "C")
 
+# OPTIONAL: Enable Over The Air (OTA) updates (ON | OFF)
+set(OTA_UPDATES ON)
+
+# OPTIONAL: Set the project version
+set(PROJECT_VER "2.4.0.1")
+
 if(HOME_AUTOMATION STREQUAL "HOMEKIT")
     set(EXTRA_COMPONENT_DIRS ${CMAKE_CURRENT_LIST_DIR}/../esp-apple-homekit-adk/)
 elseif(HOME_AUTOMATION STREQUAL "NEST")

@@ -44,8 +44,9 @@
 #define DESK_STOP                     (0x87)
 #define DESK_BEFORE_IDLE              (0x84)
 #define DESK_IDLE                     (0xFC)
-#define DESK_STATUS_READY             (0x60)
-#define DESK_STATUS_BUSY              (0x02) // Frist value after init ??
+#define DESK_STATUS_READY             (0x00)
+#define DESK_STATUS_START_MOVING      (0x02)
+#define DESK_STATUS_MOVING            (0x03)
 
 typedef struct height {
     uint8_t msb;
