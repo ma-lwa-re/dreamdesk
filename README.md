@@ -41,7 +41,7 @@ source export.sh
 ```
 
 ### HomeKit ADK
-ESP-IDF currently uses MbedTLS 2.16.x, whereas HomeKit ADK requires 2.18. A branch mbedtls-2.16.6-adk is being maintained [here](https://github.com/espressif/mbedtls/tree/mbedtls-2.16.6-adk) which has the required patches from 2.18, on top of 2.16.6.
+ESP-IDF currently uses MbedTLS 2.16.x, whereas HomeKit ADK requires 2.18. A branch mbedtls-2.16.6-adk is being maintained [`here`](https://github.com/espressif/mbedtls/tree/mbedtls-2.16.6-adk) which has the required patches from 2.18, on top of 2.16.6.
 ```
 cd $IDF_PATH/components/mbedtls/mbedtls
 git pull
@@ -80,7 +80,7 @@ export ESPPORT=/dev/cu.usbserial-0001
 idf.py build flash
 ```
 
-### Wifi
+### Wi-Fi
 The wifi credentials were previously hardcoded in the [`wifi.h`](main/wifi.h) header, but are now directly written in a standalone partition on the ESP32.
 
 It has the advantage that no secrets are stored in the code section anymore, and thus allows the same code to run on multiple devices, over-the-air (OTA) updates, or modification of wifi credentials without having to reflash the device.
@@ -102,6 +102,14 @@ espsecure.py generate_signing_key --version 2 secure_boot_signing_key.pem
 
 The bootloader will be compiled with code to verify that an app is signed before booting it. In addition, the signature will be also proofed before updating the firmware and adds significant security against network-based attacks by preventing spoofing of OTA updates.
 
+### Octal SPI Flash
+If you're using a chip version that uses an Octal SPI interface to connect Flash/PSRAM, like the ESP32-S3-WROOM-2, you need to enable its support using the command below.
+
+```
+idf.py menuconfig
+Serial flasher config ---> Enable Octal Flash
+```
+
 ## Console Output
 ```
 sudo cu -l $ESPPORT -s 115200
@@ -111,6 +119,7 @@ sudo cu -l $ESPPORT -s 115200
 ```
 dreamdesk
 ├── CMakeLists.txt
+├── LICENSE
 ├── README.md
 ├── main
 │   ├── CMakeLists.txt
@@ -125,13 +134,16 @@ dreamdesk
 │   ├── logicdata.c
 │   ├── logicdata.h
 │   ├── main.c
+│   ├── ota.c
+│   ├── ota.h
 │   ├── sensors.c
 │   ├── sensors.h
 │   ├── wifi.c
 │   └── wifi.h
 ├── partitions.csv
 ├── sdkconfig
-└── sdkconfig.defaults
+├── sdkconfig.defaults
+└── wifi.csv
 ```
 
 ## TODO
@@ -151,4 +163,4 @@ dreamdesk
 
 Issues and feature requests should be raised on GitHub using
 
-- https://github.com/ma-lwa-re/dreamdesk/issues/new
+- [`https://github.com/ma-lwa-re/dreamdesk/issues/new`](https://github.com/ma-lwa-re/dreamdesk/issues/new)

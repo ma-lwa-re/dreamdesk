@@ -22,7 +22,6 @@
 */
 #include "ota.h"
 #include "esp_log.h"
-#include "wifi.h"
 
 static const char *OTA_TAG = "ota_updates";
 
@@ -137,7 +136,7 @@ void ota_task(void *arg) {
         esp_https_ota_handle_t https_ota_handle = NULL;
 
         if(validate_image_header(&https_ota_handle) == ESP_OK) {
-            ESP_LOGI(OTA_TAG, "Downloading latest version...");
+            ESP_LOGW(OTA_TAG, "Downloading latest version...");
             for(;;) {
                 if(esp_https_ota_perform(https_ota_handle) != ESP_ERR_HTTPS_OTA_IN_PROGRESS) {
                     break;

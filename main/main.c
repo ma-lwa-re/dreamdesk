@@ -58,21 +58,6 @@ void app_main() {
     xTaskCreate(sensors_task, "sensors_task", UART_STACK_SIZE, NULL, configMAX_PRIORITIES-9, NULL);
     #endif
 
-    #if defined(OTA_UPDATES_ON)
-    const esp_partition_t *running_partition = esp_ota_get_running_partition();
-    esp_ota_img_states_t ota_state;
-
-    if(esp_ota_get_state_partition(running_partition, &ota_state) == ESP_OK) {
-
-        if(ota_state == ESP_OTA_IMG_PENDING_VERIFY && esp_ota_mark_app_valid_cancel_rollback() == ESP_OK) {
-            ESP_LOGI(DREAMDESK_TAG, "App is valid, rollback cancelled successfully!");
-        } else {
-            ESP_LOGE(DREAMDESK_TAG, "Failed to cancel rollback");
-        }
-    }
-    xTaskCreate(ota_task, "ota_task", OTA_STACK_SIZE, NULL, configMAX_PRIORITIES-8, NULL);
-    #endif
-
     #if defined(HOMEKIT) || defined(NEST) || defined(ALEXA)
     xTaskCreate(home_task, "home_task", HOMEKIT_STACK_SIZE, NULL, configMAX_PRIORITIES-7, NULL);
     #endif
@@ -80,6 +65,29 @@ void app_main() {
     xTaskCreate(usb_task, "usb_task", UART_STACK_SIZE, NULL, configMAX_PRIORITIES-5, NULL);
     xTaskCreate(move_task, "move_task", UART_STACK_SIZE, NULL, configMAX_PRIORITIES-3, NULL);
     xTaskCreate(rx_task, "rx_task", UART_STACK_SIZE, NULL, configMAX_PRIORITIES-1, NULL);
+
+    #if defined(OTA_UPDATES_ON)
+    const esp_partition_t *running_partition = esp_ota_get_running_partition();
+    esp_ota_img_states_t ota_state;
+
+    if(esp_ota_get_state_partition(running_partition, &ota_state) == ESP_OK) {
+        ESP_LOGI(DREAMDESK_TAG, "Booting partition %s @ 0x%2X 0x%2X %sencrypted", running_partition->label,
+                 running_partition->address, running_partition->size, running_partition->encrypted ? "" : "not ");
+
+        if(ota_state == ESP_OTA_IMG_VALID) {
+            ESP_LOGI(DREAMDESK_TAG, "Running OTA app is valid, boot successful");
+        } else if (ota_state == ESP_OTA_IMG_PENDING_VERIFY) {
+
+            if(esp_ota_mark_app_valid_cancel_rollback() == ESP_OK) {
+                ESP_LOGI(DREAMDESK_TAG, "Running OTA app is valid, rollback cancelled successfully!");
+            } else {
+                ESP_LOGE(DREAMDESK_TAG, "Failed to cancel rollback!");
+                esp_ota_mark_app_invalid_rollback_and_reboot();
+            }
+        }
+    }
+    xTaskCreate(ota_task, "ota_task", OTA_STACK_SIZE, NULL, configMAX_PRIORITIES-8, NULL);
+    #endif
 
     gpio_config(&(gpio_config_t){
         .mode = GPIO_MODE_OUTPUT,
