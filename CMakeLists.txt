@@ -17,14 +17,14 @@ set(SENSORS_SCALE "C")
 set(OTA_UPDATES ON)
 
 # OPTIONAL: Set the project version
-set(PROJECT_VER "2.4.0.1")
+set(PROJECT_VER "2.4.0.2")
 
 if(HOME_AUTOMATION STREQUAL "HOMEKIT")
     set(EXTRA_COMPONENT_DIRS ${CMAKE_CURRENT_LIST_DIR}/../esp-apple-homekit-adk/)
 elseif(HOME_AUTOMATION STREQUAL "NEST")
-    set(EXTRA_COMPONENT_DIRS ${CMAKE_CURRENT_LIST_DIR}/../esp-va-sdk/)
+    set(EXTRA_COMPONENT_DIRS ${CMAKE_CURRENT_LIST_DIR}/../esp-google-iot/)
 elseif(HOME_AUTOMATION STREQUAL "ALEXA")
-    set(EXTRA_COMPONENT_DIRS ${CMAKE_CURRENT_LIST_DIR}/../esp-va-sdk/)
+    set(EXTRA_COMPONENT_DIRS ${CMAKE_CURRENT_LIST_DIR}/../esp-aws-iot/)
 endif()
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)

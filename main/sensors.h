@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define FAHRENHEIT(celcius)                 (((celcius * 9) / 5.0) + 32)
+#define FAHRENHEIT(celcius)                 (((celcius * 9.0) / 5.0) + 32.0)
 #define KELVIN(celcius)                     (celcius + 273.15)
 #define I2C_MASTER_SDA                      (GPIO_NUM_6)
 #define I2C_MASTER_SCL                      (GPIO_NUM_7)
@@ -40,9 +40,12 @@
 #define MEASUREMENT_COUNT                   (0x05)
 #define SLEEP_INTERVAL_15_MIN               (1000 * 60 * 15)
 #define UPDATE_INTERVAL                     (6000)
-#define CO2_LEVEL_ERROR                     (100)
-#define CO2_LEVEL_GOOD                      (800)
-#define CO2_LEVEL_MEDIOCRE                  (1500)
+#define CO2_LEVEL_UNKNOWN                   (200)
+#define CO2_LEVEL_EXCELLENT                 (600)
+#define CO2_LEVEL_GOOD                      (1000)
+#define CO2_LEVEL_FAIR                      (1400)
+#define CO2_LEVEL_INFERIOR                  (1800)
+#define CO2_LEVEL_POOR                      (2200)
 #define SCALE_CELCIUS                       ('C')
 #define SCALE_FAHRENHEIT                    ('F')
 #define SCALE_KELVIN                        ('K')
@@ -61,12 +64,19 @@ typedef struct measurements {
     uint8_t humidity_crc;
 } measurements_t;
 
-uint16_t get_co2();
+enum air_quality_t {UNKNOWN, EXCELLENT, GOOD,
+                    FAIR, INFERIOR, POOR};
 
-uint16_t get_humidity();
+char get_temperature_scale();
 
-float  get_temperature();
+float get_current_temperature();
 
-char get_scale();
+float get_current_relative_humidity();
+
+float get_co2_level();
+
+float get_co2_peak_level();
+
+enum air_quality_t get_air_quality();
 
 void sensors_task(void *arg);

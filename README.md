@@ -28,7 +28,7 @@ set(SENSORS_SCALE "C")
 set(OTA_UPDATES ON)
 
 # OPTIONAL: Set the project version
-set(PROJECT_VER "2.4.0.1")
+set(PROJECT_VER "2.4.0.2")
 ```
 
 ## Setup
@@ -153,7 +153,7 @@ dreamdesk
 - [x] OTA updates
 - [ ] NVS encryption
 - [ ] HomeKit memory integration
-- [ ] HomeKit sensors integration
+- [x] HomeKit sensors integration
 - [x] Sensors (humidity + air + temperature)
 - [ ] Google Home support
 - [ ] Amazon Alexa support
