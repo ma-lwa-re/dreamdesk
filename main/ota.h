@@ -26,10 +26,8 @@
 #include "esp_ota_ops.h"
 #include "esp_https_ota.h"
 
-#define OTA_PROJECT_NAME        (PROJECT_NAME)
-#define OTA_PROJECT_VER         (PROJECT_VER)
-#define OTA_UPDATE_URL          ("https://ma.lwa.re/ota/Dreamdesk.bin")
-#define OTA_UPDATE_USER_AGENT   ("ESP32 HTTP Client/1.0")
+#define OTA_UPDATE_URL          ("https://ma.lwa.re/ota/" PROJECT_NAME ".bin")
+#define OTA_UPDATE_USER_AGENT   ("ESP32 HTTP Client/1.0 - " PROJECT_NAME " v" PROJECT_VER)
 #define SLEEP_INTERVAL_10_SEC   (1000 * 10)
 #define SLEEP_INTERVAL_12_HOURS (1000 * 60 * 60 * 12)
 

@@ -70,8 +70,6 @@ const char *LETS_ENCRYPT_X1_ROOT_CA = "-----BEGIN CERTIFICATE-----\n"
  "emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=\n"
  "-----END CERTIFICATE-----";
 
-char *ota_user_agent;
-
 void print_app_desc(esp_app_desc_t app_desc, char *app, esp_log_level_t log_level) {
     ESP_LOG_LEVEL(log_level, OTA_TAG, "%s firmware project: %s", app, app_desc.project_name);
     ESP_LOG_LEVEL(log_level, OTA_TAG, "%s firmware version: %s", app, app_desc.version);
@@ -83,7 +81,7 @@ esp_err_t validate_image_header(esp_https_ota_handle_t *https_ota_handle) {
     esp_http_client_config_t config = {
         .url = OTA_UPDATE_URL,
         .cert_pem = LETS_ENCRYPT_X1_ROOT_CA,
-        .user_agent = ota_user_agent
+        .user_agent = OTA_UPDATE_USER_AGENT
     };
 
     esp_https_ota_config_t ota_config = {
@@ -114,6 +112,11 @@ esp_err_t validate_image_header(esp_https_ota_handle_t *https_ota_handle) {
 
     print_app_desc(update_app_info, "Update", ESP_LOG_WARN);
 
+    if(memcmp(update_app_info.project_name, running_app_info.project_name, sizeof(update_app_info.project_name)) != 0) {
+        ESP_LOGE(OTA_TAG, "Invalid project name!");
+        return ESP_FAIL;
+    }
+
     if(memcmp(update_app_info.version, running_app_info.version, sizeof(update_app_info.version)) <= 0) {
         ESP_LOGI(OTA_TAG, "Running firmware version is up to date!");
         return ESP_ERR_INVALID_VERSION;
@@ -128,7 +131,6 @@ esp_err_t validate_image_header(esp_https_ota_handle_t *https_ota_handle) {
 }
 
 void ota_task(void *arg) {
-    asprintf(&ota_user_agent, "%s - %s v%s", OTA_UPDATE_USER_AGENT, OTA_PROJECT_NAME, OTA_PROJECT_VER);
     vTaskDelay(SLEEP_INTERVAL_10_SEC / portTICK_PERIOD_MS);
 
     for(;;) {
