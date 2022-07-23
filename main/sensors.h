@@ -23,46 +23,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define TEMPERATURE_OFFSET                  (SENSORS_TEMPERATURE_OFFSET)
+#define SENSOR_ALTITUDE                     (SENSORS_SENSOR_ALTITUDE)
 #define FAHRENHEIT(celcius)                 (((celcius * 9.0) / 5.0) + 32.0)
 #define KELVIN(celcius)                     (celcius + 273.15)
-#define I2C_MASTER_SDA                      (GPIO_NUM_6)
-#define I2C_MASTER_SCL                      (GPIO_NUM_7)
-#define I2C_MASTER_RX_BUF_DISABLE           (0)
-#define I2C_MASTER_TX_BUF_DISABLE           (0)
-#define I2C_MASTER_FREQ_HZ                  (100000)
-#define I2C_MASTER_TIMEOUT_MS               (1000)
-#define I2C_MASTER_NUM                      (0)
-#define I2C_ACK_CHECK_DIS                   (0x00)
-#define I2C_ACK_CHECK_EN                    (0x01)
-#define I2C_ACK_VAL                         (0x00)
-#define I2C_NACK_VAL                        (0x01)
-#define SCD41_SENSOR_ADDR                   (0x62)
+#define SCALE_CELCIUS                       ('C')
+#define SCALE_FAHRENHEIT                    ('F')
+#define SCALE_KELVIN                        ('K')
 #define MEASUREMENT_COUNT                   (0x05)
-#define SLEEP_INTERVAL_15_MIN               (1000 * 60 * 15)
-#define UPDATE_INTERVAL                     (6000)
+
 #define CO2_LEVEL_UNKNOWN                   (200)
 #define CO2_LEVEL_EXCELLENT                 (600)
 #define CO2_LEVEL_GOOD                      (1000)
 #define CO2_LEVEL_FAIR                      (1400)
 #define CO2_LEVEL_INFERIOR                  (1800)
 #define CO2_LEVEL_POOR                      (2200)
-#define SCALE_CELCIUS                       ('C')
-#define SCALE_FAHRENHEIT                    ('F')
-#define SCALE_KELVIN                        ('K')
-
-typedef struct msb_lsb {
-    uint8_t high;
-    uint8_t low;
-} msb_lsb_t;
-
-typedef struct measurements {
-    msb_lsb_t co2;
-    uint8_t co2_crc;
-    msb_lsb_t temperature;
-    uint8_t temperature_crc;
-    msb_lsb_t humidity;
-    uint8_t humidity_crc;
-} measurements_t;
 
 enum air_quality_t {UNKNOWN, EXCELLENT, GOOD,
                     FAIR, INFERIOR, POOR};

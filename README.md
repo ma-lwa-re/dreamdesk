@@ -121,6 +121,16 @@ dreamdesk
 ├── CMakeLists.txt
 ├── LICENSE
 ├── README.md
+├── lib
+│   └── esp32-scd4x
+│       ├── CMakeLists.txt
+│       ├── LICENSE
+│       ├── README.md
+│       ├── images
+│       │   └── SCD4x.png
+│       ├── main.c
+│       ├── scd4x.c
+│       └── scd4x.h
 ├── main
 │   ├── CMakeLists.txt
 │   ├── dreamdesk.c

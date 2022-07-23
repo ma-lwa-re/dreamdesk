@@ -1,0 +1,3 @@
+[submodule "lib/esp32-scd4x"]
+	path = lib/esp32-scd4x
+	url = https://github.com/ma-lwa-re/esp32-scd4x

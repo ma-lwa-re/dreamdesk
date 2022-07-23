@@ -21,8 +21,9 @@
 * SOFTWARE.
 */
 #include "sensors.h"
-#include "driver/i2c.h"
 #include "esp_log.h"
+#include "scd4x.h"
+#include "driver/i2c.h"
 
 static const char *SENSORS_TAG = "sensors";
 
@@ -32,10 +33,6 @@ float humidity = 0.0;
 float co2_level = 0.0;
 float co2_peak_level = 0.0;
 enum air_quality_t air_quality = UNKNOWN;
-
-uint8_t scd41_start_periodic_measurement[] = {0x21, 0xB1};
-uint8_t scd41_read_measurement[]           = {0xEC, 0x05};
-uint8_t scd41_stop_periodic_measurement[]  = {0x3F, 0x86};
 
 char get_temperature_scale() {
     return scale;
@@ -81,55 +78,6 @@ void set_air_quality(float co2_level) {
     }
 }
 
-void start_periodic_measurement() {
-    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
-
-    i2c_master_start(cmd);
-    i2c_master_write_byte(cmd, (SCD41_SENSOR_ADDR << 1) | I2C_MASTER_WRITE, I2C_ACK_CHECK_EN);
-
-    i2c_master_write(cmd, scd41_start_periodic_measurement, sizeof(scd41_start_periodic_measurement), I2C_ACK_CHECK_EN);
-
-    i2c_master_stop(cmd);
-    i2c_master_cmd_begin(I2C_MASTER_NUM, cmd, I2C_MASTER_TIMEOUT_MS / portTICK_PERIOD_MS);
-
-    i2c_cmd_link_delete(cmd);
-}
-
-void read_measurement(uint8_t *measurements, uint8_t size) {
-    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
-
-    i2c_master_start(cmd);
-    i2c_master_write_byte(cmd, (SCD41_SENSOR_ADDR << 1) | I2C_MASTER_WRITE, I2C_ACK_CHECK_EN);
-
-    i2c_master_write(cmd, scd41_read_measurement, sizeof(scd41_read_measurement), I2C_ACK_CHECK_EN);
-
-    i2c_master_start(cmd);
-
-    i2c_master_write_byte(cmd, ( SCD41_SENSOR_ADDR << 1 ) | I2C_MASTER_READ, I2C_ACK_CHECK_EN);
-
-    i2c_master_read(cmd, measurements, size - 1, I2C_ACK_VAL);
-    i2c_master_read_byte(cmd, measurements + size - 1, I2C_NACK_VAL);
-
-    i2c_master_stop(cmd);
-    i2c_master_cmd_begin(I2C_MASTER_NUM, cmd, I2C_MASTER_TIMEOUT_MS / portTICK_PERIOD_MS);
-
-    i2c_cmd_link_delete(cmd);
-}
-
-void stop_periodic_measurement() {
-    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
-
-    i2c_master_start(cmd);
-    i2c_master_write_byte(cmd, (SCD41_SENSOR_ADDR << 1) | I2C_MASTER_WRITE, I2C_ACK_CHECK_EN);
-
-    i2c_master_write(cmd, scd41_stop_periodic_measurement, sizeof(scd41_stop_periodic_measurement), I2C_ACK_CHECK_EN);
-
-    i2c_master_stop(cmd);
-    i2c_master_cmd_begin(I2C_MASTER_NUM, cmd, I2C_MASTER_TIMEOUT_MS / portTICK_PERIOD_MS);
-
-    i2c_cmd_link_delete(cmd);
-}
-
 void sensors_task(void *arg) {
     i2c_config_t i2c_config = {
         .mode = I2C_MODE_MASTER,
@@ -141,8 +89,9 @@ void sensors_task(void *arg) {
     };
 
     ESP_ERROR_CHECK(i2c_param_config(I2C_MASTER_NUM, &i2c_config));
-    ESP_ERROR_CHECK(i2c_driver_install(I2C_MASTER_NUM, i2c_config.mode, I2C_MASTER_RX_BUF_DISABLE, I2C_MASTER_TX_BUF_DISABLE, 0));
-    
+    ESP_ERROR_CHECK(i2c_driver_install(I2C_MASTER_NUM, i2c_config.mode,
+                                       I2C_MASTER_RX_BUF_DISABLE, I2C_MASTER_TX_BUF_DISABLE, 0));
+
     esp_log_level_set(SENSORS_TAG, ESP_LOG_INFO);
 
     #if defined(SENSORS_SCALE_F)
@@ -151,36 +100,85 @@ void sensors_task(void *arg) {
     scale = SCALE_KELVIN;
     #endif
 
-    for(;;) {
-        measurements_t measurements = {
-            .co2 = {0x00, 0x00},
-            .co2_crc = 0x00,
-            .temperature = {0x00, 0x00},
-            .temperature_crc = 0x00,
-            .humidity = {0x00, 0x00},
-            .humidity_crc = 0x00
-        };
+    vTaskDelay(INIT_DELAY / portTICK_PERIOD_MS);
+    ESP_LOGI(SENSORS_TAG, "Sensor serial number 0x%012llX", get_serial_number());
 
+    vTaskDelay(INIT_DELAY / portTICK_PERIOD_MS);
+    float temperature_offset = get_temperature_offset();
+
+    vTaskDelay(INIT_DELAY / portTICK_PERIOD_MS);
+    uint16_t sensor_altitude = get_sensor_altitude();
+
+    if(temperature_offset != SCD41_READ_ERROR && sensor_altitude != SCD41_READ_ERROR) {
+
+        if(temperature_offset != TEMPERATURE_OFFSET) {
+            ESP_LOGW(SENSORS_TAG, "Temperature offset calibration from %.1f °%c to %.1f °%c",
+                     temperature_offset, scale, TEMPERATURE_OFFSET, scale);
+
+            vTaskDelay(INIT_DELAY / portTICK_PERIOD_MS);
+            ESP_ERROR_CHECK_WITHOUT_ABORT(set_temperature_offset(TEMPERATURE_OFFSET));
+
+            vTaskDelay(INIT_DELAY / portTICK_PERIOD_MS);
+            ESP_ERROR_CHECK_WITHOUT_ABORT(persist_settings());
+
+            vTaskDelay(INIT_DELAY / portTICK_PERIOD_MS);
+            temperature_offset = get_temperature_offset();
+        }
+
+        if(sensor_altitude != SENSOR_ALTITUDE) {
+            ESP_LOGW(SENSORS_TAG, "Sensor altitude calibration from %d m to %d m",
+                     sensor_altitude, SENSOR_ALTITUDE);
+
+            vTaskDelay(INIT_DELAY / portTICK_PERIOD_MS);
+            ESP_ERROR_CHECK_WITHOUT_ABORT(set_sensor_altitude(SENSOR_ALTITUDE));
+
+            vTaskDelay(INIT_DELAY / portTICK_PERIOD_MS);
+            ESP_ERROR_CHECK_WITHOUT_ABORT(persist_settings());
+
+            vTaskDelay(INIT_DELAY / portTICK_PERIOD_MS);
+            sensor_altitude = get_sensor_altitude();
+        }
+        ESP_LOGI(SENSORS_TAG, "Temperature offset %.1f °%c - Sensor altitude %d %s",
+                 temperature_offset, scale, sensor_altitude, scale == SCALE_CELCIUS ? "m" : "ft");
+    } else {
+        ESP_LOGE(SENSORS_TAG, "Sensor offset/altitude read error!");
+    }
+
+    vTaskDelay(INIT_DELAY / portTICK_PERIOD_MS);
+
+    for(;;) {
         start_periodic_measurement();
 
+        uint16_t average_co2_level = 0.0;
         float average_temperature = 0.0;
         float average_humidity = 0.0;
-        float average_co2_level = 0.0;
 
-        for(uint8_t i = 0; i < MEASUREMENT_COUNT; i++) {
-            vTaskDelay(UPDATE_INTERVAL / portTICK_PERIOD_MS);
+        for(uint8_t i = 0; i < MEASUREMENT_COUNT + 2; i++) {
+            sensors_values_t sensors_values = {
+                .co2 = 0x00,
+                .temperature = 0x00,
+                .humidity = 0x00
+            };
+            vTaskDelay(UPDATE_DELAY / portTICK_PERIOD_MS);
 
-            read_measurement((uint8_t*) &measurements, sizeof(measurements));
-
-            average_co2_level += (measurements.co2.high << 8) + measurements.co2.low;
-            average_temperature += (175 * (((measurements.temperature.high << 8) + measurements.temperature.low) / 65536.0)) - 45.0;
-            average_humidity += 100 * ((measurements.humidity.high << 8) + measurements.humidity.low) / 65536.0;
-
-            ESP_LOG_BUFFER_HEX_LEVEL(SENSORS_TAG, &measurements, sizeof(measurements), ESP_LOG_DEBUG);
-
-            if(average_co2_level == 0x0000) {
+            if(read_measurement(&sensors_values) != ESP_OK) {
+                ESP_LOGE(SENSORS_TAG, "Sensors read measurement error!");
                 break;
             }
+
+            // Discard the first two sensor read outputs
+            if(i < 2) {
+                continue;
+            }
+
+            ESP_LOGD(SENSORS_TAG, "CO₂ %4d ppm - Temperature %2.1f °%c - Humidity %2.1f%%",
+                     sensors_values.co2, sensors_values.temperature, scale, sensors_values.humidity);
+
+            average_co2_level += sensors_values.co2;
+            average_temperature += sensors_values.temperature;
+            average_humidity += sensors_values.humidity;
+
+            ESP_LOG_BUFFER_HEX_LEVEL(SENSORS_TAG, &sensors_values, sizeof(sensors_values), ESP_LOG_DEBUG);
         }
 
         temperature = (average_temperature / MEASUREMENT_COUNT);
@@ -210,6 +208,6 @@ void sensors_task(void *arg) {
             ESP_LOG_LEVEL(air_quality_level, SENSORS_TAG, "CO₂ %4.0f ppm - Temperature %2.1f °%c - Humidity %2.1f%%",
                           co2_level, temperature, scale, humidity);
         }
-        vTaskDelay(SLEEP_INTERVAL_15_MIN / portTICK_PERIOD_MS);
+        vTaskDelay(SLEEP_DELAY / portTICK_PERIOD_MS);
     }
 }
