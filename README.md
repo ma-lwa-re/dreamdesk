@@ -28,7 +28,10 @@ set(SENSORS_SCALE "C")
 set(OTA_UPDATES ON)
 
 # OPTIONAL: Set the project version
-set(PROJECT_VER "2.4.0.2")
+set(PROJECT_VER "2.4.0.4")
+
+# OPTIONAL: Enable a dynamic DNS service provider (ON | OFF)
+set(DDNS ON)
 ```
 
 ## Setup
@@ -93,6 +96,24 @@ python3 nvs_partition_gen.py generate wifi.csv wifi.bin 0x3000
 esptool.py -p $ESPPORT write_flash 0x340000 wifi.bin
 ```
 
+### Dynamic DNS
+Dynamic DNS, or DDNS, is a DNS service that provides the option to change the IP address of one or multiple DNS records automatically when the IP address of your device is changed dynamically by your internet provider.
+
+This feature can be enabled in the [`CMakeLists.txt`](CMakeLists.txt) file and is compatible with most of the well-known dynamic DNS providers. It is compatible with all services that allow updating a record using an `HTTPS` `GET` or `POST` request.
+
+You can in some cases choose to set a specific IP address or leave it blank and let the server detect the incoming source IP.
+
+Example of some configurable URLs scheme provided by `DynDNS`, `DuckDNS`, `No-Ip`, or `Freemyip`.
+
+```
+https://{user}:{updater_client_key}@members.dyndns.org/v3/update?hostname={mydomain}&myip={ip_address}
+https://www.duckdns.org/update?domains={mydomain}&token={updater_client_token}&ip=
+https://{username}:{password}@dynupdate.no-ip.com/nic/update?hostname={mydomain}&myip={ip_address}
+https://freemyip.com/update?token={updater_client_token}&domain={mydomain}
+```
+
+The URL needs to be configured in the [`wifi.csv`](wifi.csv), by replacing the `DEFAULT_DDNS_UPDATE_URL` placeholder with your fully formatted URL. Then, generate a partition file and flash the device as explained in the [`Wi-Fi`](#wi-fi) chapter.
+
 ### Code Signing
 The integrity of the application can be secure and checked using an RSA signature scheme. The binary is signed after compilation with the private key that can be generated with `espsecure.py` or `openssl`, and the corresponding public key is embedded into the binary for verification.
 
@@ -133,6 +154,8 @@ dreamdesk
 │       └── scd4x.h
 ├── main
 │   ├── CMakeLists.txt
+│   ├── ddns.c
+│   ├── ddns.h
 │   ├── dreamdesk.c
 │   ├── dreamdesk.h
 │   ├── homekit.c
@@ -161,6 +184,7 @@ dreamdesk
 - [x] PCB prototype
 - [x] PCB assembly
 - [x] OTA updates
+- [x] DDNS updates
 - [ ] NVS encryption
 - [ ] HomeKit memory integration
 - [x] HomeKit sensors integration

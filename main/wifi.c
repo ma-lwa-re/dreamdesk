@@ -28,7 +28,7 @@
 #include "nvs_flash.h"
 #include "wifi.h"
 
-static const char *WIFI_TAG = "wifi station";
+static const char *WIFI_TAG = "wifi_station";
 
 wifi_config_t wifi_config = {
     .sta = {

@@ -26,12 +26,17 @@ if(OTA_UPDATES)
     set(INCLUDE_OTA_UPDATES ./ota.c)
 endif()
 
+if(DDNS)
+    set(WIFI ON)
+    set(INCLUDE_DDNS ./ddns.c)
+endif()
+
 if(WIFI)
     set(INCLUDE_WIFI ./wifi.c)
 endif()
 
-idf_component_register(SRCS ./main.c ./dreamdesk.c ./lin.c ${INCLUDE_DESK} ${INCLUDE_WIFI}
-                       ${INCLUDE_HOME} ${INCLUDE_SENSORS} ${INCLUDE_OTA_UPDATES} INCLUDE_DIRS ".")
+idf_component_register(SRCS ./main.c ./dreamdesk.c ./lin.c ${INCLUDE_DESK} ${INCLUDE_WIFI} ${INCLUDE_HOME}
+                       ${INCLUDE_SENSORS} ${INCLUDE_OTA_UPDATES} ${INCLUDE_DDNS} INCLUDE_DIRS ".")
 
-add_definitions(-DPROJECT_NAME="${CMAKE_PROJECT_NAME}" -DPROJECT_VER="${PROJECT_VER}" -D${DESK_TYPE}
-                -D${HOME_AUTOMATION} -DSENSORS_${SENSORS} -DOTA_UPDATES_${OTA_UPDATES} -DWIFI_${WIFI})
+add_definitions(-DPROJECT_NAME="${CMAKE_PROJECT_NAME}" -DPROJECT_VER="${PROJECT_VER}" -D${DESK_TYPE} -D${HOME_AUTOMATION}
+                -DSENSORS_${SENSORS} -DOTA_UPDATES_${OTA_UPDATES} -DDDNS_${DDNS} -DWIFI_${WIFI})

@@ -30,6 +30,9 @@
 #if defined(OTA_UPDATES_ON)
 #include "ota.h"
 #endif
+#if defined(DDNS_ON)
+#include "ddns.h"
+#endif
 #if defined(HOMEKIT)
 #include "homekit.h"
 #endif
@@ -87,6 +90,10 @@ void app_main() {
         }
     }
     xTaskCreate(ota_task, "ota_task", OTA_STACK_SIZE, NULL, configMAX_PRIORITIES-8, NULL);
+    #endif
+
+    #if defined(DDNS_ON)
+    xTaskCreate(ddns_task, "ddns_task", OTA_STACK_SIZE, NULL, configMAX_PRIORITIES-9, NULL);
     #endif
 
     gpio_config(&(gpio_config_t){

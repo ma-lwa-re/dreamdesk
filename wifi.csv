@@ -2,3 +2,4 @@ key,type,encoding,value
 wifi,namespace,,
 ssid,data,string,DEFAULT_SSID
 password,data,string,DEFAULT_PASSWORD
+ddns,data,string,https://DEFAULT_DDNS_UPDATE_URL

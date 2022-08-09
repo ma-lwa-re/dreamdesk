@@ -30,14 +30,16 @@
 #define SCALE_CELCIUS                       ('C')
 #define SCALE_FAHRENHEIT                    ('F')
 #define SCALE_KELVIN                        ('K')
-#define MEASUREMENT_COUNT                   (0x05)
-
+#define MEASUREMENT_COUNT                   (5.0)
 #define CO2_LEVEL_UNKNOWN                   (200)
 #define CO2_LEVEL_EXCELLENT                 (600)
 #define CO2_LEVEL_GOOD                      (1000)
 #define CO2_LEVEL_FAIR                      (1400)
 #define CO2_LEVEL_INFERIOR                  (1800)
 #define CO2_LEVEL_POOR                      (2200)
+#define SLEEP_DELAY                         (1000 * 60 * 15)
+#define READ_SAMPLES_DELAY                  (1000 * 15)
+#define SENSORS_INIT_DELAY                  (1000 * 10)
 
 enum air_quality_t {UNKNOWN, EXCELLENT, GOOD,
                     FAIR, INFERIOR, POOR};

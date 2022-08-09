@@ -23,7 +23,10 @@ set(SENSORS_SENSOR_ALTITUDE 0)
 set(OTA_UPDATES ON)
 
 # OPTIONAL: Set the project version
-set(PROJECT_VER "2.4.0.3")
+set(PROJECT_VER "2.4.0.4")
+
+# OPTIONAL: Enable a dynamic DNS service provider (ON | OFF)
+set(DDNS ON)
 
 # Include Sensirion SCD4x sensors lib
 include_directories(esp32-scd4x)
