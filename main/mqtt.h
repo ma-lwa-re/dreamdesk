@@ -20,15 +20,22 @@
 * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 * SOFTWARE.
 */
+#ifndef MQTT_H
+#define MQTT_H
+
 #include <stdio.h>
-#include <stdlib.h>
-#include "esp_efuse.h"
-#include "esp_ota_ops.h"
-#include "esp_https_ota.h"
+#include <stdbool.h>
+#include <stdint.h>
+#include "esp_err.h"
+#include "mqtt_client.h"
 
-#define OTA_UPDATE_URL          ("http://10.10.10.30:8123/local/" PROJECT_NAME ".bin")
-#define OTA_UPDATE_USER_AGENT   ("ESP32 HTTP Client/1.0 - " PROJECT_NAME " v" PROJECT_VER)
-#define SLEEP_INTERVAL_10_SEC   (1000 * 10)
-#define SLEEP_INTERVAL_12_HOURS (1000 * 60 * 60 * 12)
+#define MQTT_STACK_SIZE                         (8192)
+#define HOMEKIT_STACK_SIZE                      MQTT_STACK_SIZE
 
-void ota_task(void *arg);
+#define MQTT_DEFAULT_BROKER_URI                 "mqtt://10.10.10.24:1883"
+#define MQTT_DEFAULT_DISCOVERY_PREFIX           "homeassistant"
+#define MQTT_DEFAULT_TOPIC_PREFIX               "dreamdesk"
+
+void home_task(void *arg);
+
+#endif /* MQTT_H */

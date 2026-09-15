@@ -35,6 +35,8 @@
 #endif
 #if defined(HOMEKIT)
 #include "homekit.h"
+#elif defined(HOMEASSISTANT)
+#include "mqtt.h"
 #endif
 #include "esp_log.h"
 #include "string.h"
@@ -50,6 +52,7 @@ void app_main() {
 
     chip_info();
     memory_init();
+    desk_limits_init();
 
     #if defined(WIFI_ON)
     app_wifi_credentials();
@@ -61,7 +64,7 @@ void app_main() {
     xTaskCreate(sensors_task, "sensors_task", UART_STACK_SIZE, NULL, configMAX_PRIORITIES-9, NULL);
     #endif
 
-    #if defined(HOMEKIT) || defined(NEST) || defined(ALEXA)
+    #if defined(HOMEKIT) || defined(HOMEASSISTANT) || defined(NEST) || defined(ALEXA)
     xTaskCreate(home_task, "home_task", HOMEKIT_STACK_SIZE, NULL, configMAX_PRIORITIES-7, NULL);
     #endif
 

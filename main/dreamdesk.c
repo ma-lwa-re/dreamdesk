@@ -36,6 +36,12 @@ static const char *LIN_TAG = "lin";
 uint8_t current_desk_height = 0xFF;
 uint8_t target_desk_height = 0xFF;
 uint8_t desk_percentage = 0xFF;
+uint8_t desk_min_height = DESK_MIN_HEIGHT;
+uint8_t desk_max_height = DESK_MAX_HEIGHT;
+uint8_t desk_preset_heights[7] = {
+    MEMORY_1_HEIGHT, MEMORY_2_HEIGHT, MEMORY_3_HEIGHT,
+    MEMORY_4_HEIGHT, MEMORY_5_HEIGHT, MEMORY_6_HEIGHT, MEMORY_7_HEIGHT
+};
 
 uint8_t desk_control = false;
 
@@ -60,6 +66,77 @@ void memory_init() {
     ESP_ERROR_CHECK(flash_error);
 }
 
+void desk_limits_init() {
+    nvs_handle_t nvs_handle;
+    if(nvs_open("desk_limits", NVS_READONLY, &nvs_handle) == ESP_OK) {
+        uint8_t val = 0;
+        if(nvs_get_u8(nvs_handle, "min_h", &val) == ESP_OK && val >= 30 && val <= 180) {
+            desk_min_height = val;
+            ESP_LOGI(DREAMDESK_TAG, "Loaded min height from NVS: %dcm", desk_min_height);
+        }
+        if(nvs_get_u8(nvs_handle, "max_h", &val) == ESP_OK && val >= 30 && val <= 180) {
+            desk_max_height = val;
+            ESP_LOGI(DREAMDESK_TAG, "Loaded max height from NVS: %dcm", desk_max_height);
+        }
+        for(uint8_t i = 1; i <= 7; i++) {
+            char key[8];
+            snprintf(key, sizeof(key), "p%u_h", (unsigned int) i);
+            if(nvs_get_u8(nvs_handle, key, &val) == ESP_OK && val >= 30 && val <= 180) {
+                desk_preset_heights[i - 1] = val;
+                ESP_LOGI(DREAMDESK_TAG, "Loaded preset %u height from NVS: %dcm", (unsigned int) i, val);
+            }
+        }
+        nvs_close(nvs_handle);
+    }
+}
+
+void desk_set_min_height(uint8_t min_h) {
+    if(min_h >= 30 && min_h < desk_max_height) {
+        desk_min_height = min_h;
+        nvs_handle_t nvs_handle;
+        if(nvs_open("desk_limits", NVS_READWRITE, &nvs_handle) == ESP_OK) {
+            nvs_set_u8(nvs_handle, "min_h", min_h);
+            nvs_commit(nvs_handle);
+            nvs_close(nvs_handle);
+            ESP_LOGI(DREAMDESK_TAG, "Saved new min height to NVS: %dcm", min_h);
+        }
+    } else {
+        ESP_LOGW(DREAMDESK_TAG, "Invalid min height: %dcm (must be >= 30 and < %d)", min_h, desk_max_height);
+    }
+}
+
+void desk_set_max_height(uint8_t max_h) {
+    if(max_h > desk_min_height && max_h <= 180) {
+        desk_max_height = max_h;
+        nvs_handle_t nvs_handle;
+        if(nvs_open("desk_limits", NVS_READWRITE, &nvs_handle) == ESP_OK) {
+            nvs_set_u8(nvs_handle, "max_h", max_h);
+            nvs_commit(nvs_handle);
+            nvs_close(nvs_handle);
+            ESP_LOGI(DREAMDESK_TAG, "Saved new max height to NVS: %dcm", max_h);
+        }
+    } else {
+        ESP_LOGW(DREAMDESK_TAG, "Invalid max height: %dcm (must be > %d and <= 180)", max_h, desk_min_height);
+    }
+}
+
+void desk_set_preset_height(uint8_t preset_num, uint8_t height) {
+    if(preset_num >= 1 && preset_num <= 7 && height >= 30 && height <= 180) {
+        desk_preset_heights[preset_num - 1] = height;
+        nvs_handle_t nvs_handle;
+        if(nvs_open("desk_limits", NVS_READWRITE, &nvs_handle) == ESP_OK) {
+            char key[8];
+            snprintf(key, sizeof(key), "p%u_h", (unsigned int) preset_num);
+            nvs_set_u8(nvs_handle, key, height);
+            nvs_commit(nvs_handle);
+            nvs_close(nvs_handle);
+            ESP_LOGI(DREAMDESK_TAG, "Saved preset %u height (%dcm) to NVS", (unsigned int) preset_num, height);
+        }
+    } else {
+        ESP_LOGW(DREAMDESK_TAG, "Invalid preset %u or height %dcm", (unsigned int) preset_num, height);
+    }
+}
+
 void desk_set_target_height(uint8_t target_height) {
 
     if(target_desk_height != (target_height + 1) &&
@@ -78,8 +155,8 @@ void desk_set_target_height(uint8_t target_height) {
         }
     }
 
-    if(target_height < DESK_MIN_HEIGHT || target_height > DESK_MAX_HEIGHT) {
-        ESP_LOGE(DREAMDESK_TAG, "Target height %dcm is out of range!", target_height);
+    if(target_height < desk_min_height || target_height > desk_max_height) {
+        ESP_LOGE(DREAMDESK_TAG, "Target height %dcm is out of range (%d-%d)!", target_height, desk_min_height, desk_max_height);
         return;
     }
 
@@ -89,7 +166,16 @@ void desk_set_target_height(uint8_t target_height) {
 }
 
 void desk_set_target_percentage(uint8_t target_percentage) {
-    desk_set_target_height((((DESK_MAX_HEIGHT - DESK_MIN_HEIGHT) / 100.0) * target_percentage) + DESK_MIN_HEIGHT);
+    desk_set_target_height((((desk_max_height - desk_min_height) / 100.0) * target_percentage) + desk_min_height);
+}
+
+void desk_stop_movement() {
+    desk_control = false;
+    if(current_desk_height != 0xFF) {
+        target_desk_height = current_desk_height;
+    }
+    desk_stop();
+    ESP_LOGI(DREAMDESK_TAG, "Desk movement stopped. Height: %dcm", current_desk_height);
 }
 
 void rx_task(void *arg) {
@@ -226,31 +312,31 @@ void usb_task(void *arg) {
             }
 
             if(keyboard.memory == MEMORY_1) {
-                desk_set_target_height(MEMORY_1_HEIGHT);
+                desk_set_target_height(desk_preset_heights[0]);
             }
 
             if(keyboard.memory == MEMORY_2) {
-                desk_set_target_height(MEMORY_2_HEIGHT);
+                desk_set_target_height(desk_preset_heights[1]);
             }
 
             if(keyboard.memory == MEMORY_3) {
-                desk_set_target_height(MEMORY_3_HEIGHT);
+                desk_set_target_height(desk_preset_heights[2]);
             }
 
             if(keyboard.memory == MEMORY_4) {
-                desk_set_target_height(MEMORY_4_HEIGHT);
+                desk_set_target_height(desk_preset_heights[3]);
             }
 
             if(keyboard.memory == MEMORY_5) {
-                desk_set_target_height(MEMORY_5_HEIGHT);
+                desk_set_target_height(desk_preset_heights[4]);
             }
 
             if(keyboard.memory == MEMORY_6) {
-                desk_set_target_height(MEMORY_6_HEIGHT);
+                desk_set_target_height(desk_preset_heights[5]);
             }
 
             if(keyboard.memory == MEMORY_7) {
-                desk_set_target_height(MEMORY_7_HEIGHT);
+                desk_set_target_height(desk_preset_heights[6]);
             }
             ESP_LOG_BUFFER_HEX_LEVEL(LIN_TAG, &keyboard, sizeof(keyboard), ESP_LOG_DEBUG);
         }
