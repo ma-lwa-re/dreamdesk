@@ -62,6 +62,9 @@
 extern uint8_t current_desk_height;
 extern uint8_t target_desk_height;
 extern uint8_t desk_percentage;
+extern uint8_t desk_min_height;
+extern uint8_t desk_max_height;
+extern uint8_t desk_preset_heights[7];
 
 extern uint8_t desk_ready;
 extern uint8_t desk_reset;
@@ -79,6 +82,14 @@ void chip_info();
 
 void memory_init();
 
+void desk_limits_init();
+
+void desk_set_min_height(uint8_t min_h);
+
+void desk_set_max_height(uint8_t max_h);
+
+void desk_set_preset_height(uint8_t preset_num, uint8_t height);
+
 void desk_handle_lin_frame(lin_frame_t *lin_frame, uint8_t *event_data, uint8_t event_size);
 
 void desk_update_height(status_frame_t *status_frame);
@@ -86,6 +97,8 @@ void desk_update_height(status_frame_t *status_frame);
 void desk_set_target_height(uint8_t target_height);
 
 void desk_set_target_percentage(uint8_t target_percentage);
+
+void desk_stop_movement();
 
 void rx_task(void *arg);
 

@@ -4,11 +4,11 @@ cmake_minimum_required(VERSION 3.5)
 # REQUIRED: Choose your desk type (LOGICDATA | IKEA)
 set(DESK_TYPE "LOGICDATA")
 
-# OPTIONAL: Choose your home automation ecosystem (HOMEKIT | NEST | ALEXA | NONE)
-set(HOME_AUTOMATION "HOMEKIT")
+# OPTIONAL: Choose your home automation ecosystem (HOMEKIT | HOMEASSISTANT | NEST | ALEXA | NONE)
+set(HOME_AUTOMATION "HOMEASSISTANT")
 
 # OPTIONAL: Use the sensors (ON | OFF)
-set(SENSORS ON)
+set(SENSORS OFF)
 
 # OPTIONAL: Set the temperature scale (C | F | K)
 set(SENSORS_SCALE "C")
@@ -34,6 +34,8 @@ set(EXTRA_COMPONENT_DIRS ${EXTRA_COMPONENT_DIRS} ${CMAKE_CURRENT_LIST_DIR}/lib/e
 
 if(HOME_AUTOMATION STREQUAL "HOMEKIT")
     set(EXTRA_COMPONENT_DIRS ${EXTRA_COMPONENT_DIRS} $ENV{IDF_PATH}/../esp-apple-homekit-adk/)
+elseif(HOME_AUTOMATION STREQUAL "HOMEASSISTANT")
+    # Home Assistant uses MQTT and cJSON (built-in ESP-IDF components)
 elseif(HOME_AUTOMATION STREQUAL "NEST")
     set(EXTRA_COMPONENT_DIRS ${EXTRA_COMPONENT_DIRS} $ENV{IDF_PATH}/../esp-google-iot/)
 elseif(HOME_AUTOMATION STREQUAL "ALEXA")
